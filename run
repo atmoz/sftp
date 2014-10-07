@@ -1,0 +1,18 @@
+#!/bin/bash
+
+# Add users
+IFS=',' read -a users <<< "$SFTP_USERS"
+for userData in "${users[@]}"; do
+    IFS=':' read -a data <<< "$userData"
+    user="${data[0]}"
+    pass="${data[1]}"
+
+    useradd -G sftp $user
+    echo "$user:$pass" | chpasswd
+    chown root:root /home/$user
+    chmod 755 /home/$user
+    chown -R $user:sftp /home/$user/*
+done
+
+# Run SSH
+/usr/sbin/sshd -D
