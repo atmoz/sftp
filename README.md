@@ -6,13 +6,20 @@ SFTP Docker image
 Usage
 -----
 
-Define users and passwords in comma separated list (user1:pass1,user2:pass2), and mount filesystem as folder in user's home folder.
+
+- Define users and passwords in comma separated list with SFTP_USERS ("user1:pass1,user2:pass2").
+- Mount volumes in user's home folder.
+
+The users are chrooted to their home folders, so it is important to mount the volumes in separate folders inside the user's home folder (/home/<user>/**<your-folder>**).
+
+Example
+-------
 
 ```
 docker run \
-    -e SFTP_USERS="<some-user>:<password>,<another-user>:<password>" \
-    -v some-dir:/home/<some-user>/some-dir \
-    -v another-dir:/home/<another-user>/another-dir \
+    -e SFTP_USERS="foo:pass,bar:pass" \
+    -v "ebooks:/home/foo/ebooks" \
+    -v "http:/home/bar/http" \
     -p 2222:22 -d atmoz/sftp
 ```
 
