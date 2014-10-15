@@ -10,7 +10,7 @@ Usage
 - Define users and passwords in comma separated list with SFTP_USERS ("user1:pass1,user2:pass2").
 - Mount volumes in user's home folder.
 
-The users are chrooted to their home folders, so it is important to mount the volumes in separate folders inside the user's home folder (/home/<user>/<your-folder>).
+The users are chrooted to their home folders, so it is important to mount the volumes in separate folders inside the user's home folder (/home/your-user/**your-folder**).
 
 Example
 -------
