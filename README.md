@@ -15,6 +15,7 @@ Examples
 --------
 
 Simple (one user and one folder):
+
 ```
 docker run \
     -e SFTP_USERS="foo:123" \
@@ -23,6 +24,7 @@ docker run \
 ```
 
 Multiple users and folders:
+
 ```
 docker run \
     -e SFTP_USERS="foo:123,bar:abc" \
