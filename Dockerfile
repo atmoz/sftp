@@ -4,7 +4,6 @@ MAINTAINER Adrian Dvergsdal
 RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get -y install openssh-server
 
 RUN mkdir -p /var/run/sshd
-RUN addgroup --system sftp
 
 ADD . /root
 WORKDIR /root

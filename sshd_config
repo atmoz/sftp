@@ -1,11 +1,7 @@
 PermitRootLogin no
-#ChallengeResponseAuthentication no
-UsePAM no
 Subsystem sftp internal-sftp
-
-Match group sftp
-    ChrootDirectory %h
-    X11Forwarding no
-    AllowTcpForwarding no
-    ForceCommand internal-sftp
+ChrootDirectory %h
+X11Forwarding no
+AllowTcpForwarding no
+ForceCommand internal-sftp
 

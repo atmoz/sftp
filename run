@@ -7,11 +7,11 @@ for userData in "${users[@]}"; do
     user="${data[0]}"
     pass="${data[1]}"
 
-    useradd -G sftp $user
+    useradd $user
     echo "$user:$pass" | chpasswd
     chown root:root /home/$user
     chmod 755 /home/$user
-    chown -R $user:sftp /home/$user/*
+    chown -R $user:users /home/$user/*
 done
 
 # Run SSH
