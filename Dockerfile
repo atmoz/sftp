@@ -9,11 +9,12 @@ RUN apt-get update && \
 # sshd needs this directory to run
 RUN mkdir -p /var/run/sshd
 
-# Add configuration and run script
+# Add configuration and script
 ADD . /root
 WORKDIR /root
-RUN mv sshd_config /etc/ssh/sshd_config
+RUN mv sshd_config /etc/ssh/sshd_config && \
+    chmod +x run
 
 EXPOSE 22
 
-CMD ["/bin/bash", "run"]
+CMD ["./run"]

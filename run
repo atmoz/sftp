@@ -1,17 +1,35 @@
 #!/bin/bash
 
-# Add users
+# Add users (user:pass[:e][:[uid][:gid]][,...])
 IFS=',' read -a users <<< "$SFTP_USERS"
 for userData in "${users[@]}"; do
     IFS=':' read -a data <<< "$userData"
     user="${data[0]}"
     pass="${data[1]}"
 
-    useradd $user
-    echo "$user:$pass" | chpasswd
+    if [ "${data[2]}" == "e" ]; then
+        chpasswdParams="-e"
+        uid="${data[3]}"
+        gid="${data[4]}"
+    else
+        uid="${data[2]}"
+        gid="${data[3]}"
+    fi
+
+    useraddParams="-m -N"
+
+    if [ -n "$uid" ]; then
+        useraddParams="$useraddParams -o -u $uid"
+    fi
+
+    if [ -n "$gid" ]; then
+        useraddParams="$useraddParams -g $gid"
+    fi
+
+    useradd $useraddParams "$user"
+    echo "$user:$pass" | chpasswd $chpasswdParams
     chown root:root /home/$user
     chmod 755 /home/$user
-    chown -R $user:users /home/$user/*
 done
 
 # Run SSH

@@ -1,36 +1,63 @@
 sftp
 ====
 
-Simple and easy to use SFTP server based on Debian
+Easy to use SFTP (*SSH File Transfer Protocol*) server.
 
 Usage
 -----
 
-- Define users and passwords in comma separated list with SFTP_USERS ("user1:pass1,user2:pass2").
+- Define users and passwords in comma separated list with SFTP_USERS (syntax:
+  `user:pass[:e][:[uid][:gid]][,...]`).
+  - You must set custom UID and/or GID for your users if you want them to make
+    changes to your mounted volumes with permissions matching your host
+    filesystem.
 - Mount volumes in user's home folder.
-
-The users are chrooted to their home folders, so it is important to mount the volumes in separate folders inside the user's home folder (/home/your-user/**your-folder**).
+  - The users are chrooted to their home directory, so you must mount the
+    volumes in separate directories inside the user's home directory
+    (/home/user/**mounted-directory**).
 
 Examples
 --------
 
-Simple (one user and one folder):
+### Single user and volume
 
 ```
 docker run \
-    -e SFTP_USERS="foo:123" \
-    -v "/sftp/share:/home/foo/share" \
+    -e SFTP_USERS='foo:123' \
+    -v "/host/share:/home/foo/share" \
     -p 2222:22 -d atmoz/sftp
 ```
 
-Multiple users and folders:
+### Multiple users and volumes
 
 ```
 docker run \
-    -e SFTP_USERS="foo:123,bar:abc" \
-    -v "/sftp/share:/home/foo/share" \
-    -v "/sftp/ebooks:/home/foo/ebooks" \
-    -v "/sftp/http:/home/bar/http" \
+    -e SFTP_USERS='foo:123,bar:abc' \
+    -v "/host/share:/home/foo/share" \
+    -v "/host/documents:/home/foo/documents" \
+    -v "/host/http:/home/bar/http" \
     -p 2222:22 -d atmoz/sftp
 ```
 
+### Custom UID and GID
+
+```
+SFTP_USERS='foo:123:1001:100'
+```
+
+Only custom GID:
+
+```
+SFTP_USERS='foo:123::100'
+```
+
+### Encrypted password
+
+Add `:e` behind password to mark it as encrypted:
+
+```
+SFTP_USERS='foo:$1$0G2g0GSt$ewU0t6GXG15.0hWoOX8X9.:e:1001:100'
+```
+
+Tip: you can use makepasswd to generate encrypted passwords:
+`echo -n 123 | makepasswd --crypt-md5 --clearfrom -`
