@@ -6,8 +6,8 @@ Easy to use SFTP (*SSH File Transfer Protocol*) server.
 Usage
 -----
 
-- Define users and passwords in comma separated list with SFTP_USERS (syntax:
-  `user:pass[:e][:[uid][:gid]][,...]`).
+- Define users and passwords in comma separated list with SFTP_USERS  
+  (syntax: `user:pass[:e][:[uid][:gid]][,...]`).
   - You must set custom UID and/or GID for your users if you want them to make
     changes to your mounted volumes with permissions matching your host
     filesystem.
@@ -59,5 +59,5 @@ Add `:e` behind password to mark it as encrypted:
 SFTP_USERS='foo:$1$0G2g0GSt$ewU0t6GXG15.0hWoOX8X9.:e:1001:100'
 ```
 
-Tip: you can use makepasswd to generate encrypted passwords:
+Tip: you can use makepasswd to generate encrypted passwords:  
 `echo -n 123 | makepasswd --crypt-md5 --clearfrom -`
