@@ -31,6 +31,7 @@ for users in "$@"; do
 
     if [ -z "$pass" ]; then
         pass="$(echo `</dev/urandom tr -dc A-Za-z0-9 | head -c256`)"
+        chpasswdParams=""
     fi
 
     echo "$user:$pass" | chpasswd $chpasswdParams
