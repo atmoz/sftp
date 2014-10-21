@@ -53,11 +53,11 @@ docker run \
 Tip: you can use makepasswd to generate encrypted passwords:  
 `echo -n 123 | makepasswd --crypt-md5 --clearfrom -`
 
-### Use public key (without password)
+### Using SSH key (without password)
 
 ```
 docker run \
-    -v /host/id_rsa.pub:/public_keys/foo:ro \
+    -v /host/id_rsa.pub:/home/foo/.ssh/authorized_keys:ro \
     -v /host/share:/home/foo/share \
     -p 2222:22 -d atmoz/sftp \
     foo::1001

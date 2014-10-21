@@ -30,26 +30,10 @@ for users in "$@"; do
     chmod 755 /home/$user
 
     if [ -z "$pass" ]; then
-        # just make a very long and random password
         pass="$(echo `</dev/urandom tr -dc A-Za-z0-9 | head -c256`)"
     fi
 
     echo "$user:$pass" | chpasswd $chpasswdParams
-
-#    if [ -f /home/$user/.ssh/authorized_keys ]; then
-#        chown -R $user:users /home/$user/.ssh
-#        chmod 400 /home/$user/.ssh/authorized_keys
-#    fi
 done
-
-cd /public_keys
-for user in *; do
-    if id -u $user >/dev/null 2>&1; then
-        mkdir -p /home/$user/.ssh
-        cp $user /home/$user/.ssh/authorized_keys
-        chown $user:users /home/$user/.ssh/authorized_keys
-    fi
-done
-cd /root
 
 exec /usr/sbin/sshd -D
