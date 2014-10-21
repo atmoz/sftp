@@ -6,11 +6,10 @@ Easy to use SFTP (*SSH File Transfer Protocol*) server.
 Usage
 -----
 
-- Define users and passwords in comma separated list with SFTP_USERS  
-  (syntax: `user:pass[:e][:[uid][:gid]][,...]`).
-  - You must set custom UID and/or GID for your users if you want them to make
-    changes to your mounted volumes with permissions matching your host
-    filesystem.
+- Define users as last arguments to `docker run`, one user per argument  
+  (syntax: `user:pass[:e][:[uid][:gid]]`).
+  - You must set custom UID for your users if you want them to make changes to
+    your mounted volumes with permissions matching your host filesystem.
 - Mount volumes in user's home folder.
   - The users are chrooted to their home directory, so you must mount the
     volumes in separate directories inside the user's home directory
@@ -23,41 +22,43 @@ Examples
 
 ```
 docker run \
-    -e SFTP_USERS='foo:123' \
-    -v "/host/share:/home/foo/share" \
-    -p 2222:22 -d atmoz/sftp
+    -v /host/share:/home/foo/share \
+    -p 2222:22 -d atmoz/sftp \
+    foo:123:1001
 ```
 
 ### Multiple users and volumes
 
 ```
 docker run \
-    -e SFTP_USERS='foo:123,bar:abc' \
-    -v "/host/share:/home/foo/share" \
-    -v "/host/documents:/home/foo/documents" \
-    -v "/host/http:/home/bar/http" \
-    -p 2222:22 -d atmoz/sftp
-```
-
-### Custom UID and GID
-
-```
-SFTP_USERS='foo:123:1001:100'
-```
-
-Only custom GID:
-
-```
-SFTP_USERS='foo:123::100'
+    -v /host/share:/home/foo/share \
+    -v /host/documents:/home/foo/documents \
+    -v /host/http:/home/bar/http \
+    -p 2222:22 -d atmoz/sftp \
+    foo:123:1001 \
+    bar:abc:1002
 ```
 
 ### Encrypted password
 
-Add `:e` behind password to mark it as encrypted:
+Add `:e` behind password to mark it as encrypted. Use single quotes.
 
 ```
-SFTP_USERS='foo:$1$0G2g0GSt$ewU0t6GXG15.0hWoOX8X9.:e:1001:100'
+docker run \
+    -v /host/share:/home/foo/share \
+    -p 2222:22 -d atmoz/sftp \
+    'foo:$1$0G2g0GSt$ewU0t6GXG15.0hWoOX8X9.:e:1001'
 ```
 
 Tip: you can use makepasswd to generate encrypted passwords:  
 `echo -n 123 | makepasswd --crypt-md5 --clearfrom -`
+
+### Use public key (without password)
+
+```
+docker run \
+    -v /host/id_rsa.pub:/public_keys/foo:ro \
+    -v /host/share:/home/foo/share \
+    -p 2222:22 -d atmoz/sftp \
+    foo::1001
+```

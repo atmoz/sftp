@@ -1,9 +1,8 @@
 #!/bin/bash
 
-# Add users (user:pass[:e][:[uid][:gid]][,...])
-IFS=',' read -a users <<< "$SFTP_USERS"
-for userData in "${users[@]}"; do
-    IFS=':' read -a data <<< "$userData"
+for users in "$@"; do
+    # user:pass[:e][:[uid][:gid]]
+    IFS=':' read -a data <<< "$users"
     user="${data[0]}"
     pass="${data[1]}"
 
@@ -27,10 +26,30 @@ for userData in "${users[@]}"; do
     fi
 
     useradd $useraddParams "$user"
-    echo "$user:$pass" | chpasswd $chpasswdParams
     chown root:root /home/$user
     chmod 755 /home/$user
+
+    if [ -z "$pass" ]; then
+        # just make a very long and random password
+        pass="$(echo `</dev/urandom tr -dc A-Za-z0-9 | head -c256`)"
+    fi
+
+    echo "$user:$pass" | chpasswd $chpasswdParams
+
+#    if [ -f /home/$user/.ssh/authorized_keys ]; then
+#        chown -R $user:users /home/$user/.ssh
+#        chmod 400 /home/$user/.ssh/authorized_keys
+#    fi
 done
 
-# Run SSH
-/usr/sbin/sshd -D
+cd /public_keys
+for user in *; do
+    if id -u $user >/dev/null 2>&1; then
+        mkdir -p /home/$user/.ssh
+        cp $user /home/$user/.ssh/authorized_keys
+        chown $user:users /home/$user/.ssh/authorized_keys
+    fi
+done
+cd /root
+
+exec /usr/sbin/sshd -D
