@@ -7,7 +7,7 @@ Usage
 -----
 
 - Define users as last arguments to `docker run`, one user per argument  
-  (syntax: `user:[pass[:e]][:[uid][:gid]]`).
+  (syntax: `user:pass[:e][:[uid][:gid]]`).
   - You must set custom UID for your users if you want them to make changes to
     your mounted volumes with permissions matching your host filesystem.
 - Mount volumes in user's home folder.

@@ -1,7 +1,6 @@
 #!/bin/bash
 
 for users in "$@"; do
-    # user:[pass[:e]][:[uid][:gid]]
     IFS=':' read -a data <<< "$users"
     user="${data[0]}"
     pass="${data[1]}"
