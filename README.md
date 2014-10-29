@@ -1,4 +1,4 @@
-sftp
+sftp [![Docker Build Status](http://hubstatus.container42.com/atmoz/sftp)](https://registry.hub.docker.com/u/atmoz/sftp)
 ====
 
 Easy to use SFTP (*SSH File Transfer Protocol*) server.
