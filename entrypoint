@@ -14,15 +14,15 @@ for users in "$@"; do
         gid="${data[3]}"
     fi
 
-    useraddParams="-m -N"
+    useraddParams="--create-home --no-user-group"
 
     if [ -n "$uid" ]; then
-        useraddParams="$useraddParams -o -u $uid"
+        useraddParams="$useraddParams --non-unique --uid $uid"
     fi
 
     if [ -n "$gid" ]; then
-        useraddParams="$useraddParams -g $gid"
-	groupadd -g $gid $gid
+        useraddParams="$useraddParams --gid $gid"
+        groupadd --gid $gid $gid
     fi
 
     useradd $useraddParams "$user"
