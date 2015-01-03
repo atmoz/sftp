@@ -6,7 +6,7 @@ for users in "$@"; do
     pass="${data[1]}"
 
     if [ "${data[2]}" == "e" ]; then
-        chpasswdParams="-e"
+        chpasswdOptions="-e"
         uid="${data[3]}"
         gid="${data[4]}"
     else
@@ -14,27 +14,27 @@ for users in "$@"; do
         gid="${data[3]}"
     fi
 
-    useraddParams="--create-home --no-user-group"
+    useraddOptions="--create-home --no-user-group"
 
     if [ -n "$uid" ]; then
-        useraddParams="$useraddParams --non-unique --uid $uid"
+        useraddOptions="$useraddOptions --non-unique --uid $uid"
     fi
 
     if [ -n "$gid" ]; then
-        useraddParams="$useraddParams --gid $gid"
+        useraddOptions="$useraddOptions --gid $gid"
         groupadd --gid $gid $gid
     fi
 
-    useradd $useraddParams "$user"
+    useradd $useraddOptions $user
     chown root:root /home/$user
     chmod 755 /home/$user
 
     if [ -z "$pass" ]; then
         pass="$(echo `</dev/urandom tr -dc A-Za-z0-9 | head -c256`)"
-        chpasswdParams=""
+        chpasswdOptions=""
     fi
 
-    echo "$user:$pass" | chpasswd $chpasswdParams
+    echo "$user:$pass" | chpasswd $chpasswdOptions
 done
 
 exec /usr/sbin/sshd -D
