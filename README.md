@@ -6,12 +6,17 @@ Easy to use SFTP ([SSH File Transfer Protocol](https://en.wikipedia.org/wiki/SSH
 Usage
 -----
 
-- Define users as last arguments to `docker run`, one user per argument  
-  (syntax: `user:pass[:e][:[uid][:gid]]`).
-  - You must set custom UID for your users if you want them to make changes to
+- Define users as last arguments to `docker run`, one user per argument. Options in square brackets are optional.
+  (syntax: `user:[pass][:e][:[uid][:gid][:home]]`).
+    - _user_ sftp username to be created
+    - _pass_ password for new user. Randomly generated if not specified.
+    - _uid_ numeric user id assigned to the new sftp user. Generated if not specified.
+    - _gid_ primary group id assigned to the new sftp user. Generated if not specified.
+    - _home_ home folder for the new sftp user. Defaults to /home/_user_
+    - You must set custom UID for your users if you want them to make changes to
     your mounted volumes with permissions matching your host filesystem.
 - Mount volumes in user's home folder.
-  - The users are chrooted to their home directory, so you must mount the
+    - The users are chrooted to their home directory, so you must mount the
     volumes in separate directories inside the user's home directory
     (/home/user/**mounted-directory**).
 
@@ -25,6 +30,16 @@ docker run \
     -v /host/share:/home/foo/share \
     -p 2222:22 -d atmoz/sftp \
     foo:123:1001
+```
+
+### Single user with custom home directory
+For example, to provide SFTP access to a location provided by another container via _--volumes-from_
+
+```
+docker run \
+    -v /host/share:/home/foo/share \
+    -p 2222:22 -d atmoz/sftp \
+    foo:123:1001:/desired/home/folder
 ```
 
 ### Multiple users and volumes
