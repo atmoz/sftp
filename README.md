@@ -29,16 +29,9 @@ docker run \
 
 #### Logging in
 
-The SFTP server runs in the container on port 22, and in this example, you are forwarding the container's port 22 to the host's port 2222.
-
-To log into the STFP server, run
-
-```
-sftp -P 2222 foo@docker.host.tld
-```
-
-with docker.host.tld being the address (IP or domain name) of the machine running the Docker daemon.
-
+The OpenSSH server runs by default on port 22, and in this example, we are
+forwarding the container's port 22 to the host's port 2222. To log in with an
+OpenSSH client, run: `sftp -P 2222 foo@<your-container-ip>`
 
 ### Multiple users and volumes
 
