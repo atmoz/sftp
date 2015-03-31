@@ -26,8 +26,6 @@ for users in "$@"; do
     fi
 
     useradd $useraddOptions $user
-    chown root:root /home/$user
-    chmod 755 /home/$user
 
     if [ -z "$pass" ]; then
         pass="$(echo `</dev/urandom tr -dc A-Za-z0-9 | head -c256`)"
