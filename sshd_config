@@ -1,7 +1,4 @@
 PermitRootLogin no
-Subsystem sftp internal-sftp
-ChrootDirectory %h
+Subsystem sftp /usr/lib/openssh/sftp-server
 X11Forwarding no
 AllowTcpForwarding no
-ForceCommand internal-sftp
-
