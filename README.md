@@ -61,9 +61,13 @@ Tip: you can use makepasswd to generate encrypted passwords:
 
 ### Using SSH key (without password)
 
+Mount all public keys in the user's `.ssh/keys/` folder. All keys are automatically
+appended to `.ssh/authorized_keys`.
+
 ```
 docker run \
-    -v /host/id_rsa.pub:/home/foo/.ssh/authorized_keys:ro \
+    -v /host/id_rsa.pub:/home/foo/.ssh/keys/id_rsa.pub:ro \
+    -v /host/id_other.pub:/home/foo/.ssh/keys/id_other.pub:ro \
     -v /host/share:/home/foo/share \
     -p 2222:22 -d atmoz/sftp \
     foo::1001
