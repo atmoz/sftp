@@ -1,4 +1,4 @@
-sftp [![Docker Build Status](http://hubstatus.container42.com/atmoz/sftp)](https://registry.hub.docker.com/u/atmoz/sftp)
+atmoz/sftp [![Docker Build Status](http://hubstatus.container42.com/atmoz/sftp)](https://registry.hub.docker.com/u/atmoz/sftp) [![](https://badge.imagelayers.io/atmoz/sftp:latest.svg)](https://imagelayers.io/?images=atmoz/sftp:latest 'Get your own badge on imagelayers.io')
 ====
 
 Easy to use SFTP ([SSH File Transfer Protocol](https://en.wikipedia.org/wiki/SSH_File_Transfer_Protocol)) server with [OpenSSH](https://en.wikipedia.org/wiki/OpenSSH).
