@@ -1,4 +1,4 @@
-FROM debian:wheezy
+FROM debian:jessie
 MAINTAINER Adrian Dvergsdal [atmoz.net]
 
 RUN apt-get update && \
