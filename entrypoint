@@ -1,33 +1,32 @@
 #!/bin/bash
 
-if [ $1 == "--readme" ]; then
-    cat /README.md
-    exit 0
-fi
-
-if [[ -z $1 || $1 =~ ^--help$|^-h$ ]]; then
+function printHelp() {
     echo "Syntax: user:pass[:e][:[uid][:gid]]..."
     echo "Use --readme for information and examples."
-    exit 0
-fi
+}
 
-for users in "$@"; do
-    IFS=':' read -a data <<< "$users"
-    user="${data[0]}"
-    pass="${data[1]}"
+function printReadme() {
+    cat /README.md
+}
+
+function createUser() {
+    IFS=':' read -a param <<< $@
+    user="${param[0]}"
+    pass="${param[1]}"
 
     if [ -z "$user" -o -z "$pass" ]; then
         echo "You must at least provide a username and a password."
+        printHelp
         exit 1
     fi
 
-    if [ "${data[2]}" == "e" ]; then
+    if [ "${param[2]}" == "e" ]; then
         chpasswdOptions="-e"
-        uid="${data[3]}"
-        gid="${data[4]}"
+        uid="${param[3]}"
+        gid="${param[4]}"
     else
-        uid="${data[2]}"
-        gid="${data[3]}"
+        uid="${param[2]}"
+        gid="${param[3]}"
     fi
 
     useraddOptions="--create-home --no-user-group"
@@ -55,6 +54,20 @@ for users in "$@"; do
     cat /home/$user/.ssh/keys/* >> /home/$user/.ssh/authorized_keys
     chown $user /home/$user/.ssh/authorized_keys
     chmod 600 /home/$user/.ssh/authorized_keys
+}
+
+if [[ -z $1 || $1 =~ ^--help$|^-h$ ]]; then
+    printHelp
+    exit 0
+fi
+
+if [ "$1" == "--readme" ]; then
+    printReadme
+    exit 0
+fi
+
+for user in "$@"; do
+    createUser $user
 done
 
 exec /usr/sbin/sshd -D
