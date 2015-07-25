@@ -1,9 +1,25 @@
 #!/bin/bash
 
+if [ $1 == "--readme" ]; then
+    cat /README.md
+    exit 0
+fi
+
+if [[ -z $1 || $1 =~ ^--help$|^-h$ ]]; then
+    echo "Syntax: user:pass[:e][:[uid][:gid]]..."
+    echo "Use --readme for information and examples."
+    exit 0
+fi
+
 for users in "$@"; do
     IFS=':' read -a data <<< "$users"
     user="${data[0]}"
     pass="${data[1]}"
+
+    if [ -z "$user" -o -z "$pass" ]; then
+        echo "You must at least provide a username and a password."
+        exit 1
+    fi
 
     if [ "${data[2]}" == "e" ]; then
         chpasswdOptions="-e"
