@@ -1,3 +1,4 @@
+
 #!/usr/bin/env bash
 
 ########################################################################
@@ -164,7 +165,15 @@ runTests() {
         exit 0
     fi
 
+    if [ "$(type -t "beforeTest")" == "function" ]; then
+        beforeTest
+    fi
+
     for tc in $testcases ; do $tc ; done
+
+    if [ "$(type -t "afterTest")" == "function" ]; then
+        afterTest
+    fi
 
     if [ $verbose -ge 1 ] ; then
         echo "Done. $bashunit_passed passed." \
