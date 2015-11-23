@@ -1,0 +1,68 @@
+#!/bin/bash
+# See: https://github.com/djui/bashunit
+
+scriptDir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+buildDir="$scriptDir/.."
+tmpDir="/tmp/atmoz_sftp_test"
+
+build=${1:-"build"}
+sftpImageName="atmoz/sftp_test"
+sftpContainerName="atmoz_sftp_test"
+
+function beforeTest() {
+    if [ "$build" == "build" ]; then
+        docker build --pull=true --tag "$sftpImageName" "$buildDir"
+    fi
+
+    rm -rf "$tmpDir" # clean state
+    mkdir "$tmpDir"
+
+    docker run \
+        -v "$scriptDir/id_rsa.pub":/home/test/.ssh/keys/id_rsa.pub:ro \
+        -v "$tmpDir":/home/test/share \
+        --name "$sftpContainerName" \
+        --expose 22 \
+        -d "$sftpImageName" \
+        test:123:$(id -u):$(id -g) \
+        > /dev/null
+    sleep 1 # wait for sftp server to get ready
+}
+
+function afterTest() {
+    docker rm -fv "$sftpContainerName" > /dev/null
+    rm -rf "$tmpDir"
+}
+
+function getSftpIp() {
+    docker inspect -f {{.NetworkSettings.IPAddress}} "$sftpContainerName"
+}
+
+function runSftpCommands() {
+    ip="$(getSftpIp)"
+    echo "$@" | sftp \
+        -i "$scriptDir/id_rsa" \
+        -oStrictHostKeyChecking=no \
+        -oUserKnownHostsFile=/dev/null \
+        -b - test@$ip \
+        > /dev/null 2>&1
+}
+
+function testContainerIsRunning() {
+    ps="$(docker ps -q -f name="$sftpContainerName")"
+    assertNotEqual "$ps" ""
+}
+
+function testLoginUsingSshKey() {
+    runSftpCommands "exit"
+    assertReturn $? 0
+}
+
+function testWritePermission() {
+    runSftpCommands $'cd share\nmkdir test'
+    test -d "$tmpDir/test"
+    assertReturn $? 0
+}
+
+# Run tests
+source "$scriptDir/bashunit.bash"
+# Nothing happens after this
