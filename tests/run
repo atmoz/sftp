@@ -14,6 +14,9 @@ function beforeTest() {
         docker build --pull=true --tag "$sftpImageName" "$buildDir"
     fi
 
+    # Private key can not be read by others
+    chmod go-rw "$scriptDir/id_rsa"
+
     rm -rf "$tmpDir" # clean state
     mkdir "$tmpDir"
 
