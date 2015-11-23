@@ -27,6 +27,18 @@ docker run \
     foo:123:1001
 ```
 
+#### Using Docker Compose:
+
+```
+sftp:
+    image: atmoz/sftp
+    volumes:
+        - /host/share:/home/foo/share
+    ports:
+        - "2222:22"
+    command: foo:123:1001
+```
+
 #### Logging in
 
 The OpenSSH server runs by default on port 22, and in this example, we are
