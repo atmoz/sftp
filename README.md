@@ -47,9 +47,8 @@ OpenSSH client, run: `sftp -P 2222 foo@<host-ip>`
 
 ### Store users in config
 
-/host/users.conf:
-
 ```
+$ cat /host/users.conf
 foo:123:1001
 bar:abc:1002
 ```
