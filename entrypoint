@@ -1,12 +1,17 @@
 #!/bin/bash
 
+userConfPath="/etc/sftp-users.conf"
+userConfFinalPath="/var/run/sftp-users.conf"
+
 function printHelp() {
-    echo "Syntax: user:pass[:e][:[uid][:gid]]..."
-    echo "Use --readme for information and examples."
+    echo "Add users as command arguments, STDIN or mounted in $userConfPath"
+    echo "Syntax: user:pass[:e][:uid[:gid]]..."
+    echo "Use --readme for more information and examples."
 }
 
 function printReadme() {
     cat /README.md
+    echo "TIP: Read this in HTML format here: https://github.com/atmoz/sftp"
 }
 
 function createUser() {
@@ -14,8 +19,8 @@ function createUser() {
     user="${param[0]}"
     pass="${param[1]}"
 
-    if [ -z "$user" -o -z "$pass" ]; then
-        echo "You must at least provide a username and a password."
+    if [ -z "$user" ]; then
+        echo "You must at least provide a username."
         printHelp
         exit 1
     fi
@@ -29,7 +34,7 @@ function createUser() {
         gid="${param[3]}"
     fi
 
-    useraddOptions="--create-home --no-user-group"
+    useraddOptions="--no-user-group"
 
     if [ -n "$uid" ]; then
         useraddOptions="$useraddOptions --non-unique --uid $uid"
@@ -37,7 +42,10 @@ function createUser() {
 
     if [ -n "$gid" ]; then
         useraddOptions="$useraddOptions --gid $gid"
-        groupadd --gid $gid $gid
+
+        if [ "$(cat /etc/group | cut -d : -f3 | grep -q "$gid")" ]; then
+            groupadd --gid $gid $gid
+        fi
     fi
 
     useradd $useraddOptions $user
@@ -56,7 +64,7 @@ function createUser() {
     chmod 600 /home/$user/.ssh/authorized_keys
 }
 
-if [[ -z $1 || $1 =~ ^--help$|^-h$ ]]; then
+if [[ $1 =~ ^--help$|^-h$ ]]; then
     printHelp
     exit 0
 fi
@@ -66,8 +74,30 @@ if [ "$1" == "--readme" ]; then
     exit 0
 fi
 
+# Append mounted config to final config
+if [ -f "$userConfPath" ]; then
+    cat "$userConfPath" >> "$userConfFinalPath"
+fi
+
+# Append users from arguments to final config
 for user in "$@"; do
-    createUser $user
+    echo "$user" >> "$userConfFinalPath"
 done
+
+# Append users from STDIN to final config
+while IFS= read -r user || [[ -n "$user" ]]; do
+    echo "$user" >> "$userConfFinalPath"
+done
+
+if [ ! -f "$userConfFinalPath" ]; then
+    echo "ERROR: Missing users!"
+    printHelp
+    exit 1
+fi
+
+# Import users from final conf file
+while IFS= read -r user || [[ -n "$user" ]]; do
+    createUser "$user";
+done < "$userConfFinalPath"
 
 exec /usr/sbin/sshd -D

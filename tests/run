@@ -6,8 +6,18 @@ buildDir="$scriptDir/.."
 tmpDir="/tmp/atmoz_sftp_test"
 
 build=${1:-"build"}
+output=${2:-"quiet"}
+cleanup=${3:-"cleanup"}
 sftpImageName="atmoz/sftp_test"
 sftpContainerName="atmoz_sftp_test"
+
+if [ "$output" == "quiet" ]; then
+    redirect="/dev/null"
+else
+    redirect=$'&1'
+fi
+
+##############################################################################
 
 function beforeTest() {
     if [ "$build" == "build" ]; then
@@ -20,20 +30,27 @@ function beforeTest() {
     rm -rf "$tmpDir" # clean state
     mkdir "$tmpDir"
 
+    echo "test::$(id -u):$(id -g)" >> "$tmpDir/users"
     docker run \
+        -v "$tmpDir/users:/etc/sftp-users.conf:ro" \
         -v "$scriptDir/id_rsa.pub":/home/test/.ssh/keys/id_rsa.pub:ro \
         -v "$tmpDir":/home/test/share \
         --name "$sftpContainerName" \
         --expose 22 \
         -d "$sftpImageName" \
-        test:123:$(id -u):$(id -g) \
-        > /dev/null
+        > "$redirect"
     sleep 1 # wait for sftp server to get ready
 }
 
 function afterTest() {
-    docker rm -fv "$sftpContainerName" > /dev/null
-    rm -rf "$tmpDir"
+    if [ "$output" != "quiet" ]; then
+        docker logs "$sftpContainerName"
+    fi
+
+    if [ "$cleanup" == "cleanup" ]; then
+        docker rm -fv "$sftpContainerName" > "$redirect"
+        rm -rf "$tmpDir"
+    fi
 }
 
 function getSftpIp() {
@@ -42,13 +59,21 @@ function getSftpIp() {
 
 function runSftpCommands() {
     ip="$(getSftpIp)"
-    echo "$@" | sftp \
+
+    commands=""
+    for cmd in "$@"; do
+        commands="$commands$cmd"$'\n'
+    done
+
+    echo "$commands" | sftp \
         -i "$scriptDir/id_rsa" \
         -oStrictHostKeyChecking=no \
         -oUserKnownHostsFile=/dev/null \
         -b - test@$ip \
-        > /dev/null 2>&1
+        > "$redirect" 2>&1
 }
+
+##############################################################################
 
 function testContainerIsRunning() {
     ps="$(docker ps -q -f name="$sftpContainerName")"
@@ -61,10 +86,12 @@ function testLoginUsingSshKey() {
 }
 
 function testWritePermission() {
-    runSftpCommands $'cd share\nmkdir test'
+    runSftpCommands "cd share" "mkdir test" "exit"
     test -d "$tmpDir/test"
     assertReturn $? 0
 }
+
+##############################################################################
 
 # Run tests
 source "$scriptDir/bashunit.bash"
