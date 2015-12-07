@@ -48,18 +48,19 @@ OpenSSH client, run: `sftp -P 2222 foo@<host-ip>`
 ### Store users in config
 
 ```
-$ cat /host/users.conf
-foo:123:1001
-bar:abc:1002
-```
-
-```
 docker run \
     -v /host/users.conf:/etc/sftp-users.conf:ro \
     -v /host/share:/home/foo/share \
     -v /host/documents:/home/foo/documents \
     -v /host/http:/home/bar/http \
     -p 2222:22 -d atmoz/sftp
+```
+
+/host/users.conf:
+
+```
+foo:123:1001
+bar:abc:1002
 ```
 
 ### Encrypted password
