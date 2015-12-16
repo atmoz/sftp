@@ -1,4 +1,5 @@
 #!/bin/bash
+set -e
 
 userConfPath="/etc/sftp-users.conf"
 userConfFinalPath="/var/run/sftp-users.conf"
@@ -43,7 +44,7 @@ function createUser() {
     if [ -n "$gid" ]; then
         useraddOptions="$useraddOptions --gid $gid"
 
-        if [ "$(cat /etc/group | cut -d : -f3 | grep -q "$gid")" ]; then
+        if [ $(cat /etc/group | cut -d: -f3 | grep -q "$gid") ]; then
             groupadd --gid $gid $gid
         fi
     fi
@@ -85,9 +86,11 @@ for user in "$@"; do
 done
 
 # Append users from STDIN to final config
-while IFS= read -r user || [[ -n "$user" ]]; do
-    echo "$user" >> "$userConfFinalPath"
-done
+if [ ! -t 0 ]; then
+    while IFS= read -r user || [[ -n "$user" ]]; do
+        echo "$user" >> "$userConfFinalPath"
+    done
+fi
 
 if [ ! -f "$userConfFinalPath" ]; then
     echo "ERROR: Missing users!"
@@ -97,7 +100,7 @@ fi
 
 # Import users from final conf file
 while IFS= read -r user || [[ -n "$user" ]]; do
-    createUser "$user";
+    createUser "$user"
 done < "$userConfFinalPath"
 
 exec /usr/sbin/sshd -D

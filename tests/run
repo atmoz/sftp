@@ -14,7 +14,7 @@ sftpContainerName="atmoz_sftp_test"
 if [ "$output" == "quiet" ]; then
     redirect="/dev/null"
 else
-    redirect=$'&1'
+    redirect="/dev/stdout"
 fi
 
 ##############################################################################
