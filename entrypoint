@@ -35,6 +35,11 @@ function createUser() {
         gid="${param[3]}"
     fi
 
+    if $(cat /etc/passwd | cut -d: -f3 | grep -q "$uid"); then
+        echo "User with UID \"$uid\" already exists, skipping."
+        return 0
+    fi
+
     useraddOptions="--no-user-group"
 
     if [ -n "$uid" ]; then
@@ -75,32 +80,37 @@ if [ "$1" == "--readme" ]; then
     exit 0
 fi
 
-# Append mounted config to final config
-if [ -f "$userConfPath" ]; then
-    cat "$userConfPath" >> "$userConfFinalPath"
-fi
+# Create final config
+if [ ! -f "$userConfFinalPath" ]; then
 
-# Append users from arguments to final config
-for user in "$@"; do
-    echo "$user" >> "$userConfFinalPath"
-done
+    # Append mounted config to final config
+    if [ -f "$userConfPath" ]; then
+        cat "$userConfPath" >> "$userConfFinalPath"
+    fi
 
-# Append users from STDIN to final config
-if [ ! -t 0 ]; then
-    while IFS= read -r user || [[ -n "$user" ]]; do
+    # Append users from arguments to final config
+    for user in "$@"; do
         echo "$user" >> "$userConfFinalPath"
     done
-fi
 
-if [ ! -f "$userConfFinalPath" ]; then
-    echo "ERROR: Missing users!"
-    printHelp
-    exit 1
-fi
+    # Append users from STDIN to final config
+    if [ ! -t 0 ]; then
+        while IFS= read -r user || [[ -n "$user" ]]; do
+            echo "$user" >> "$userConfFinalPath"
+        done
+    fi
 
-# Import users from final conf file
-while IFS= read -r user || [[ -n "$user" ]]; do
-    createUser "$user"
-done < "$userConfFinalPath"
+    if [ ! -f "$userConfFinalPath" ]; then
+        echo "ERROR: Missing users!"
+        printHelp
+        exit 1
+    fi
+
+    # Import users from final conf file
+    while IFS= read -r user || [[ -n "$user" ]]; do
+        createUser "$user"
+    done < "$userConfFinalPath"
+
+fi
 
 exec /usr/sbin/sshd -D
