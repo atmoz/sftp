@@ -1,6 +1,8 @@
 #!/bin/bash
 # See: https://github.com/djui/bashunit
 
+skipAllTests=false
+
 scriptDir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 buildDir="$scriptDir/.."
 tmpDir="/tmp/atmoz_sftp_test"
@@ -75,17 +77,55 @@ function runSftpCommands() {
 
 ##############################################################################
 
+function testMinimalContainerStart() {
+    $skipAllTests && skip && return 0
+
+    tmpContainerName="$sftpContainerName""_minimal"
+
+    docker run \
+        --name "$tmpContainerName" \
+        -d "$sftpImageName" \
+        minimal::1111 \
+        > "$redirect"
+    sleep 1
+
+    ps="$(docker ps -q -f name="$tmpContainerName")"
+    assertNotEqual "$ps" ""
+
+    if [ -z "$ps" ]; then
+        skipAllTests=true
+    fi
+
+    if [ "$output" != "quiet" ]; then
+        docker logs "$tmpContainerName"
+    fi
+
+    if [ "$cleanup" == "cleanup" ]; then
+        docker rm -fv "$tmpContainerName" > "$redirect"
+    fi
+}
+
 function testContainerIsRunning() {
+    $skipAllTests && skip && return 0
+
     ps="$(docker ps -q -f name="$sftpContainerName")"
     assertNotEqual "$ps" ""
+
+    if [ -z "$ps" ]; then
+        skipAllTests=true
+    fi
 }
 
 function testLoginUsingSshKey() {
+    $skipAllTests && skip && return 0
+
     runSftpCommands "exit"
     assertReturn $? 0
 }
 
 function testWritePermission() {
+    $skipAllTests && skip && return 0
+
     runSftpCommands "cd share" "mkdir test" "exit"
     test -d "$tmpDir/test"
     assertReturn $? 0
