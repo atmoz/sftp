@@ -55,6 +55,7 @@ function createUser() {
     fi
 
     useradd $useraddOptions $user
+    mkdir -p /home/$user
     chown root:root /home/$user
     chmod 755 /home/$user
 
@@ -65,9 +66,12 @@ function createUser() {
 
     echo "$user:$pass" | chpasswd $chpasswdOptions
 
-    cat /home/$user/.ssh/keys/* >> /home/$user/.ssh/authorized_keys
-    chown $user /home/$user/.ssh/authorized_keys
-    chmod 600 /home/$user/.ssh/authorized_keys
+    # Add SSH keys to authorized_keys with valid permissions
+    if [ -d /home/$user/.ssh/keys ]; then
+        cat /home/$user/.ssh/keys/* >> /home/$user/.ssh/authorized_keys
+        chown $user /home/$user/.ssh/authorized_keys
+        chmod 600 /home/$user/.ssh/authorized_keys
+    fi
 }
 
 if [[ $1 =~ ^--help$|^-h$ ]]; then
