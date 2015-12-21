@@ -20,12 +20,6 @@ function createUser() {
     user="${param[0]}"
     pass="${param[1]}"
 
-    if [ -z "$user" ]; then
-        echo "You must at least provide a username."
-        printHelp
-        exit 1
-    fi
-
     if [ "${param[2]}" == "e" ]; then
         chpasswdOptions="-e"
         uid="${param[3]}"
@@ -35,9 +29,14 @@ function createUser() {
         gid="${param[3]}"
     fi
 
-    if $(cat /etc/passwd | cut -d: -f3 | grep -q "$uid"); then
-        echo "User with UID \"$uid\" already exists, skipping."
-        return 0
+    if [ -z "$user" ]; then
+        echo "FATAL: You must at least provide a username."
+        exit 1
+    fi
+
+    if $(cat /etc/passwd | cut -d: -f1 | grep -q "$user"); then
+        echo "FATAL: User \"$user\" already exists."
+        exit 2
     fi
 
     useraddOptions="--no-user-group"
@@ -47,11 +46,11 @@ function createUser() {
     fi
 
     if [ -n "$gid" ]; then
-        useraddOptions="$useraddOptions --gid $gid"
-
         if ! $(cat /etc/group | cut -d: -f3 | grep -q "$gid"); then
             groupadd --gid $gid $gid
         fi
+
+        useraddOptions="$useraddOptions --gid $gid"
     fi
 
     useradd $useraddOptions $user
@@ -84,12 +83,12 @@ if [ "$1" == "--readme" ]; then
     exit 0
 fi
 
-# Create final config
+# Create users only on first run
 if [ ! -f "$userConfFinalPath" ]; then
 
     # Append mounted config to final config
     if [ -f "$userConfPath" ]; then
-        cat "$userConfPath" >> "$userConfFinalPath"
+        cat "$userConfPath" > "$userConfFinalPath"
     fi
 
     # Append users from arguments to final config
@@ -104,10 +103,11 @@ if [ ! -f "$userConfFinalPath" ]; then
         done
     fi
 
-    if [ ! -f "$userConfFinalPath" ]; then
-        echo "ERROR: Missing users!"
+    # Check that we have users in config
+    if [ "$(cat "$userConfFinalPath" | wc -l)" == 0 ]; then
+        echo "FATAL: No users provided!"
         printHelp
-        exit 1
+        exit 3
     fi
 
     # Import users from final conf file

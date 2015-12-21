@@ -46,6 +46,7 @@ function beforeTest() {
 
 function afterTest() {
     if [ "$output" != "quiet" ]; then
+        echo "Docker logs:"
         docker logs "$sftpContainerName"
     fi
 
