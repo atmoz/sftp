@@ -115,6 +115,13 @@ if [ ! -f "$userConfFinalPath" ]; then
         createUser "$user"
     done < "$userConfFinalPath"
 
+    # Source custom scripts, if any
+    if [ -d /etc/sftp.d ]; then
+        for f in /etc/sftp.d/*; do
+            [ -x "$f" ] && . "$f"
+        done
+        unset f
+    fi
 fi
 
 exec /usr/sbin/sshd -D
