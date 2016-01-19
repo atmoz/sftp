@@ -58,6 +58,13 @@ function createUser() {
     chown root:root /home/$user
     chmod 755 /home/$user
 
+    # Added to enable logging
+    mkdir /home/$user/dev
+    chmod 755 /home/$user/dev
+    /etc/init.d/rsyslog start # create the socket
+    ln -f /home/sftp.log.socket /home/$user/dev/log
+    touch /var/log/sftp.log
+
     if [ -z "$pass" ]; then
         pass="$(echo `</dev/urandom tr -dc A-Za-z0-9 | head -c256`)"
         chpasswdOptions=""
@@ -124,4 +131,4 @@ if [ ! -f "$userConfFinalPath" ]; then
     fi
 fi
 
-exec /usr/sbin/sshd -D
+exec /usr/bin/supervisord
