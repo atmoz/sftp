@@ -5,3 +5,9 @@ ChrootDirectory %h
 X11Forwarding no
 AllowTcpForwarding no
 ForceCommand internal-sftp
+Protocol 2
+ClientAliveInterval 300
+ClientAliveCountMax 0
+IgnoreRhosts yes
+HostbasedAuthentication no
+PermitEmptyPasswords no
