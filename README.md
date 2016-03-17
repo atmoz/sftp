@@ -18,7 +18,7 @@ Usage
 Examples
 --------
 
-### Simple example
+### Simple docker run example
 
 ```
 docker run \
@@ -42,7 +42,7 @@ sftp:
 #### Logging in
 
 The OpenSSH server runs by default on port 22, and in this example, we are
-forwarding the container's port 22 to the host's port 2222. To log in with an
+forwarding the container's port 22 to the host's port 2222. To log in with the
 OpenSSH client, run: `sftp -P 2222 foo@<host-ip>`
 
 ### Store users in config
@@ -65,7 +65,7 @@ bar:abc:1002
 
 ### Encrypted password
 
-Add `:e` behind password to mark it as encrypted. Use single quotes.
+Add `:e` behind password to mark it as encrypted. Use single quotes if using terminal.
 
 ```
 docker run \
@@ -89,4 +89,34 @@ docker run \
     -v /host/share:/home/foo/share \
     -p 2222:22 -d atmoz/sftp \
     foo::1001
+```
+
+### Execute custom scripts or applications
+
+Put your programs in /etc/sftp.d/ and it will automatically run when the container starts.
+See next section for an example.
+
+### Bindmount dirs from another location
+
+If you are using --volumes-from or just want to make a custom directory
+available in user's home directory, you can add a script to /etc/sftp.d/ that
+bindmounts after container starts.
+
+```
+#!/bin/bash
+# Just an example (make your own):
+function bindmount() {
+    if [ -d "$1" ]; then
+        mkdir -p "$2"
+    fi
+    mount --bind $3 "$1" "$2"
+}
+
+# Remember permissions, you may have to fix it:
+# chown -R :users /data/common
+
+bindmount /data/admin-tools /home/admin/tools
+bindmount /data/common /home/dave/common
+bindmount /data/common /home/peter/common
+bindmount /data/docs /home/peter/docs --read-only
 ```
