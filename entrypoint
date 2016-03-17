@@ -59,7 +59,7 @@ function createUser() {
     chmod 755 /home/$user
 
     if [ -z "$pass" ]; then
-        pass="$(echo `</dev/urandom tr -dc A-Za-z0-9 | head -c256`)"
+        pass="$(tr -dc A-Za-z0-9 </dev/urandom | head -c256)"
         chpasswdOptions=""
     fi
 
