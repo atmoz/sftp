@@ -114,8 +114,6 @@ if [ ! -f "$userConfFinalPath" ]; then
     while IFS= read -r user || [[ -n "$user" ]]; do
         createUser "$user"
     done < "$userConfFinalPath"
-
-   
 fi
 # Source custom scripts, if any
 if [ -d /etc/sftp.d ]; then
