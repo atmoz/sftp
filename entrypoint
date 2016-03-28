@@ -118,14 +118,14 @@ if [ ! -f "$userConfFinalPath" ]; then
 
     # Generate unique ssh keys for this container
     dpkg-reconfigure openssh-server
+fi
 
-    # Source custom scripts, if any
-    if [ -d /etc/sftp.d ]; then
-        for f in /etc/sftp.d/*; do
-            [ -x "$f" ] && . "$f"
-        done
-        unset f
-    fi
+# Source custom scripts, if any
+if [ -d /etc/sftp.d ]; then
+    for f in /etc/sftp.d/*; do
+        [ -x "$f" ] && . "$f"
+    done
+    unset f
 fi
 
 exec /usr/sbin/sshd -D
