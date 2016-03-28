@@ -1,5 +1,6 @@
 #!/bin/bash
 set -e
+export DEBIAN_FRONTEND=noninteractive
 
 userConfPath="/etc/sftp-users.conf"
 userConfFinalPath="/var/run/sftp-users.conf"
@@ -114,6 +115,9 @@ if [ ! -f "$userConfFinalPath" ]; then
     while IFS= read -r user || [[ -n "$user" ]]; do
         createUser "$user"
     done < "$userConfFinalPath"
+
+    # Generate unique ssh keys for this container
+    dpkg-reconfigure openssh-server
 
     # Source custom scripts, if any
     if [ -d /etc/sftp.d ]; then
