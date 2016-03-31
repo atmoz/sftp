@@ -89,7 +89,7 @@ if [ ! -f "$userConfFinalPath" ]; then
 
     # Append mounted config to final config
     if [ -f "$userConfPath" ]; then
-        cat "$userConfPath" > "$userConfFinalPath"
+        cat "$userConfPath" | grep -v -e '^$' > "$userConfFinalPath"
     fi
 
     # Append users from arguments to final config
