@@ -5,6 +5,9 @@ export DEBIAN_FRONTEND=noninteractive
 userConfPath="/etc/sftp-users.conf"
 userConfFinalPath="/var/run/sftp-users.conf"
 
+# flag to indicate that we've created new users so we need to reconfigure 
+userCreated=false
+
 function printHelp() {
     echo "Add users as command arguments, STDIN or mounted in $userConfPath"
     echo "Syntax: user:pass[:e][:uid[:gid]]..."
@@ -36,8 +39,8 @@ function createUser() {
     fi
 
     if $(cat /etc/passwd | cut -d: -f1 | grep -q "$user"); then
-        echo "FATAL: User \"$user\" already exists."
-        exit 2
+        echo "INFO: Skip already existing user \"$user\"."
+        return
     fi
 
     useraddOptions="--no-user-group"
@@ -55,6 +58,7 @@ function createUser() {
     fi
 
     useradd $useraddOptions $user
+    userCreated=true
     mkdir -p /home/$user
     chown root:root /home/$user
     chmod 755 /home/$user
@@ -84,41 +88,42 @@ if [ "$1" == "--readme" ]; then
     exit 0
 fi
 
-# Create users only on first run
-if [ ! -f "$userConfFinalPath" ]; then
+# Create users on each run
 
-    # Append mounted config to final config
-    if [ -f "$userConfPath" ]; then
-        cat "$userConfPath" > "$userConfFinalPath"
-    fi
+# Append mounted config to final config
+if [ -f "$userConfPath" ]; then
+    cat "$userConfPath" > "$userConfFinalPath"
+fi
 
-    # Append users from arguments to final config
-    for user in "$@"; do
+# Append users from arguments to final config
+for user in "$@"; do
+    echo "$user" >> "$userConfFinalPath"
+done
+
+# Append users from STDIN to final config
+if [ ! -t 0 ]; then
+    while IFS= read -r user || [[ -n "$user" ]]; do
         echo "$user" >> "$userConfFinalPath"
     done
+fi
 
-    # Append users from STDIN to final config
-    if [ ! -t 0 ]; then
-        while IFS= read -r user || [[ -n "$user" ]]; do
-            echo "$user" >> "$userConfFinalPath"
-        done
-    fi
+# Check that we have users in config
+if [ "$(cat "$userConfFinalPath" | wc -l)" == 0 ]; then
+    echo "FATAL: No users provided!"
+    printHelp
+    exit 3
+fi
 
-    # Check that we have users in config
-    if [ "$(cat "$userConfFinalPath" | wc -l)" == 0 ]; then
-        echo "FATAL: No users provided!"
-        printHelp
-        exit 3
-    fi
+# Import users from final conf file
+while IFS= read -r user || [[ -n "$user" ]]; do
+    createUser "$user"
+done < "$userConfFinalPath"
 
-    # Import users from final conf file
-    while IFS= read -r user || [[ -n "$user" ]]; do
-        createUser "$user"
-    done < "$userConfFinalPath"
-
+if $userCreated; then
     # Generate unique ssh keys for this container
     dpkg-reconfigure openssh-server
 fi
+
 
 # Source custom scripts, if any
 if [ -d /etc/sftp.d ]; then
