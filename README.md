@@ -25,7 +25,7 @@ Examples
 docker run \
     -v /host/share:/home/foo/share \
     -p 2222:22 -d atmoz/sftp \
-    foo:123:1001
+    foo:123:1001;share
 ```
 
 #### Using Docker Compose:
