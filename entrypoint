@@ -5,7 +5,7 @@ export DEBIAN_FRONTEND=noninteractive
 userConfPath="/etc/sftp-users.conf"
 userConfFinalPath="/var/run/sftp-users.conf"
 
-# flag to indicate that we've created new users so we need to reconfigure 
+# flag to indicate that we've created new users so we need to reconfigure
 userCreated=false
 
 function printHelp() {
@@ -92,7 +92,7 @@ fi
 
 # Append mounted config to final config
 if [ -f "$userConfPath" ]; then
-    cat "$userConfPath" > "$userConfFinalPath"
+    cat "$userConfPath" | grep -v -e '^$' > "$userConfFinalPath"
 fi
 
 # Append users from arguments to final config
@@ -123,7 +123,6 @@ if $userCreated; then
     # Generate unique ssh keys for this container
     dpkg-reconfigure openssh-server
 fi
-
 
 # Source custom scripts, if any
 if [ -d /etc/sftp.d ]; then
