@@ -116,8 +116,13 @@ if [ ! -f "$userConfFinalPath" ]; then
         createUser "$user"
     done < "$userConfFinalPath"
 
-    # Generate unique ssh keys for this container
-    dpkg-reconfigure openssh-server
+    # Generate unique ssh keys for this container, if needed
+    if [ ! -f /etc/ssh/ssh_host_ed25519_key ]; then
+        ssh-keygen -t ed25519 -f /etc/ssh/ssh_host_ed25519_key < /dev/null
+    fi
+    if [ ! -f /etc/ssh/ssh_host_rsa_key ]; then
+        ssh-keygen -t rsa -b 4096 -f /etc/ssh/ssh_host_rsa_key < /dev/null
+    fi
 fi
 
 # Source custom scripts, if any

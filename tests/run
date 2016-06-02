@@ -24,6 +24,10 @@ fi
 function beforeTest() {
     if [ "$build" == "build" ]; then
         docker build --pull=true --tag "$sftpImageName" "$buildDir"
+        if [ $? -gt 0 ]; then
+            echo "Build failed"
+            exit 1
+        fi
     fi
 
     # Private key can not be read by others
@@ -41,7 +45,7 @@ function beforeTest() {
         --expose 22 \
         -d "$sftpImageName" \
         > "$redirect"
-    sleep 1 # wait for sftp server to get ready
+    sleep 2 # wait for sftp server to get ready
 }
 
 function afterTest() {
@@ -76,6 +80,8 @@ function runSftpCommands() {
         -oUserKnownHostsFile=/dev/null \
         -b - $user@$ip \
         > "$redirect" 2>&1
+
+    sleep 1 # wait for command to finish
 }
 
 ##############################################################################
@@ -90,7 +96,7 @@ function testMinimalContainerStart() {
         -d "$sftpImageName" \
         minimal \
         > "$redirect"
-    sleep 1
+    sleep 2
 
     ps="$(docker ps -q -f name="$tmpContainerName")"
     assertNotEqual "$ps" ""
@@ -157,7 +163,7 @@ function testCustomContainerStart() {
         -d "$sftpImageName" \
         custom:123 \
         > "$redirect"
-    sleep 1
+    sleep 2
 
     ps="$(docker ps -q -f name="$tmpContainerName")"
     assertNotEqual "$ps" ""
