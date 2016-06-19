@@ -3,6 +3,7 @@ MAINTAINER Adrian Dvergsdal [atmoz.net]
 
 RUN apt-get update && \
     DEBIAN_FRONTEND=noninteractive apt-get -y install openssh-server && \
+    apt-get -y install makepasswd && \
     rm -rf /var/lib/apt/lists/*
 
 # Step 1: sshd needs /var/run/sshd/ to run

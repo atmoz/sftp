@@ -84,6 +84,21 @@ if [ "$1" == "--readme" ]; then
     exit 0
 fi
 
+if [ "$1" == "makepasswd" ]; then
+    shift
+
+    if [ $# -eq 0 ]; then
+      echo "makepasswd need an argument"
+      echo "e.g. makepasswd  mysecretpassword"
+      exit 1
+    fi
+
+    password=$1
+    shift
+    echo -n "$password" | makepasswd --crypt-md5 --clearfrom -
+    exit 0
+fi
+
 # Create users only on first run
 if [ ! -f "$userConfFinalPath" ]; then
 

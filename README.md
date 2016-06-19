@@ -75,7 +75,7 @@ docker run \
 ```
 
 Tip: you can use makepasswd to generate encrypted passwords:  
-`echo -n "password" | makepasswd --crypt-md5 --clearfrom -`
+`docker run -t  atmoz/sftp makepasswd password`
 
 ### Using SSH key (without password)
 
