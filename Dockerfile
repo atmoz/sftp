@@ -10,12 +10,9 @@ RUN apt-get update && \
     rm -f /etc/ssh/ssh_host_*key* && \
     rm -rf /var/lib/apt/lists/*
 
-
 COPY sshd_config /etc/ssh/sshd_config
 COPY entrypoint /
 COPY README.md /
-
-VOLUME /etc/ssh
 
 EXPOSE 22
 
