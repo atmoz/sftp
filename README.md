@@ -10,10 +10,11 @@ This is an automated build linked with the [debian](https://hub.docker.com/_/deb
 
 # Usage
 
-- Define users as command arguments, STDIN or mounted in /etc/sftp-users.conf
-  (syntax: `user:pass[:e][:uid[:gid]]...`).
+- Define users as command arguments, STDIN or mounted in `/etc/sftp-users.conf`
+  (syntax: `user:pass[:e][:uid[:gid]][;folder1:folder2]`).
   - You must set custom UID for your users if you want them to make changes to
     your mounted volumes with permissions matching your host filesystem.
+  - You can create folders within user's home directory for which user will be owner and will be able to write/upload.
 - Mount volumes in user's home folder.
   - The users are chrooted to their home directory, so you must mount the
     volumes in separate directories inside the user's home directory
@@ -27,7 +28,7 @@ This is an automated build linked with the [debian](https://hub.docker.com/_/deb
 docker run \
     -v /host/share:/home/foo/share \
     -p 2222:22 -d atmoz/sftp \
-    foo:123:1001
+    foo:123:1001;share
 ```
 
 ### Using Docker Compose:
@@ -39,7 +40,7 @@ sftp:
         - /host/share:/home/foo/share
     ports:
         - "2222:22"
-    command: foo:123:1001
+    command: foo:123:1001;share
 ```
 
 ### Logging in
@@ -62,8 +63,8 @@ docker run \
 /host/users.conf:
 
 ```
-foo:123:1001
-bar:abc:1002
+foo:123:1001;share:documents
+bar:abc:1002;http
 ```
 
 ## Encrypted password
@@ -74,10 +75,10 @@ Add `:e` behind password to mark it as encrypted. Use single quotes if using ter
 docker run \
     -v /host/share:/home/foo/share \
     -p 2222:22 -d atmoz/sftp \
-    'foo:$1$0G2g0GSt$ewU0t6GXG15.0hWoOX8X9.:e:1001'
+    'foo:$1$0G2g0GSt$ewU0t6GXG15.0hWoOX8X9.:e:1001;share'
 ```
 
-Tip: you can use makepasswd to generate encrypted passwords:  
+Tip: you can use `makepasswd` to generate encrypted passwords:  
 `echo -n "password" | makepasswd --crypt-md5 --clearfrom -`
 
 ## Using SSH key (without password)
@@ -91,18 +92,18 @@ docker run \
     -v /host/id_other.pub:/home/foo/.ssh/keys/id_other.pub:ro \
     -v /host/share:/home/foo/share \
     -p 2222:22 -d atmoz/sftp \
-    foo::1001
+    foo::1001;share
 ```
 
 ## Execute custom scripts or applications
 
-Put your programs in /etc/sftp.d/ and it will automatically run when the container starts.
+Put your programs in `/etc/sftp.d/` and it will automatically run when the container starts.
 See next section for an example.
 
 ## Bindmount dirs from another location
 
-If you are using --volumes-from or just want to make a custom directory
-available in user's home directory, you can add a script to /etc/sftp.d/ that
+If you are using `--volumes-from` or just want to make a custom directory
+available in user's home directory, you can add a script to `/etc/sftp.d/` that
 bindmounts after container starts.
 
 ```

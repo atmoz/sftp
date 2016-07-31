@@ -17,18 +17,26 @@ function printReadme() {
 }
 
 function createUser() {
-    IFS=':' read -a param <<< $@
-    user="${param[0]}"
-    pass="${param[1]}"
+    # user:pass[:e][:uid[:gid]][;folder1:folder2]
 
-    if [ "${param[2]}" == "e" ]; then
-        chpasswdOptions="-e"
-        uid="${param[3]}"
-        gid="${param[4]}"
-    else
-        uid="${param[2]}"
-        gid="${param[3]}"
-    fi
+    while IFS=';' read -ra part; do
+        userInfos="${part[0]}"
+        folders="${part[1]}"
+    done <<< $@
+
+    while IFS=':' read -ra param; do
+        user="${param[0]}"
+        pass="${param[1]}"
+
+        if [ "${param[2]}" == "e" ]; then
+            chpasswdOptions="-e"
+            uid="${param[3]}"
+            gid="${param[4]}"
+        else
+            uid="${param[2]}"
+            gid="${param[3]}"
+        fi
+    done <<< $userInfos
 
     if [ -z "$user" ]; then
         echo "FATAL: You must at least provide a username."
@@ -65,6 +73,14 @@ function createUser() {
     fi
 
     echo "$user:$pass" | chpasswd $chpasswdOptions
+
+    # create folders & configure permissions
+    while IFS=':' read -ra part; do
+        for folder in "${part[@]}"; do
+            mkdir -p /home/$user/$folder
+            chown -R $user:users /home/$user/$folder
+        done
+    done <<< $folders
 
     # Add SSH keys to authorized_keys with valid permissions
     if [ -d /home/$user/.ssh/keys ]; then
