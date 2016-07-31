@@ -1,7 +1,7 @@
 # Supported tags and respective `Dockerfile` links
 
-- [`debian`, `latest` (*Dockerfile*)](https://github.com/atmoz/sftp/blob/master/Dockerfile)
-- [`alpine` (*Dockerfile*)](https://github.com/atmoz/sftp/blob/alpine/Dockerfile)
+- [`debian-jessie`, `debian`, `latest` (*Dockerfile*)](https://github.com/atmoz/sftp/blob/master/Dockerfile)
+- [`alpine-3.4`, `alpine` (*Dockerfile*)](https://github.com/atmoz/sftp/blob/alpine/Dockerfile)
 
 # Securely share your files
 
