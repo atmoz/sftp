@@ -1,10 +1,14 @@
-atmoz/sftp
-==========
+# Supported tags and respective `Dockerfile` links
 
-Easy to use SFTP ([SSH File Transfer Protocol](https://en.wikipedia.org/wiki/SSH_File_Transfer_Protocol)) server with [OpenSSH](https://en.wikipedia.org/wiki/OpenSSH). This is an automated build linked with the [debian](https://hub.docker.com/_/debian/) repository.
+- [`debian-jessie`, `debian`, `latest` (*Dockerfile*)](https://github.com/atmoz/sftp/blob/master/Dockerfile)
+- [`alpine-3.4`, `alpine` (*Dockerfile*)](https://github.com/atmoz/sftp/blob/alpine/Dockerfile)
 
-Usage
------
+# Securely share your files
+
+Easy to use SFTP ([SSH File Transfer Protocol](https://en.wikipedia.org/wiki/SSH_File_Transfer_Protocol)) server with [OpenSSH](https://en.wikipedia.org/wiki/OpenSSH).
+This is an automated build linked with the [debian](https://hub.docker.com/_/debian/) and [alpine](https://hub.docker.com/_/alpine/) repositories.
+
+# Usage
 
 - Define users as command arguments, STDIN or mounted in /etc/sftp-users.conf
   (syntax: `user:pass[:e][:uid[:gid]]...`).
@@ -15,10 +19,9 @@ Usage
     volumes in separate directories inside the user's home directory
     (/home/user/**mounted-directory**).
 
-Examples
---------
+# Examples
 
-### Simple docker run example
+## Simple docker run example
 
 ```
 docker run \
@@ -27,7 +30,7 @@ docker run \
     foo:123:1001
 ```
 
-#### Using Docker Compose:
+### Using Docker Compose:
 
 ```
 sftp:
@@ -39,13 +42,13 @@ sftp:
     command: foo:123:1001
 ```
 
-#### Logging in
+### Logging in
 
 The OpenSSH server runs by default on port 22, and in this example, we are
 forwarding the container's port 22 to the host's port 2222. To log in with the
 OpenSSH client, run: `sftp -P 2222 foo@<host-ip>`
 
-### Store users in config
+## Store users in config
 
 ```
 docker run \
@@ -63,7 +66,7 @@ foo:123:1001
 bar:abc:1002
 ```
 
-### Encrypted password
+## Encrypted password
 
 Add `:e` behind password to mark it as encrypted. Use single quotes if using terminal.
 
@@ -77,7 +80,7 @@ docker run \
 Tip: you can use makepasswd to generate encrypted passwords:  
 `echo -n "password" | makepasswd --crypt-md5 --clearfrom -`
 
-### Using SSH key (without password)
+## Using SSH key (without password)
 
 Mount all public keys in the user's `.ssh/keys/` folder. All keys are automatically
 appended to `.ssh/authorized_keys`.
@@ -91,12 +94,12 @@ docker run \
     foo::1001
 ```
 
-### Execute custom scripts or applications
+## Execute custom scripts or applications
 
 Put your programs in /etc/sftp.d/ and it will automatically run when the container starts.
 See next section for an example.
 
-### Bindmount dirs from another location
+## Bindmount dirs from another location
 
 If you are using --volumes-from or just want to make a custom directory
 available in user's home directory, you can add a script to /etc/sftp.d/ that
