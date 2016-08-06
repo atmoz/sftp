@@ -10,7 +10,7 @@ This is an automated build linked with the [debian](https://hub.docker.com/_/deb
 
 # Usage
 
-- Define users as command arguments, STDIN or mounted in /etc/sftp-users.conf
+- Define users as command arguments, STDIN or mounted in `/etc/sftp-users.conf`
   (syntax: `user:pass[:e][:uid[:gid]]...`).
   - You must set custom UID for your users if you want them to make changes to
     your mounted volumes with permissions matching your host filesystem.
@@ -96,18 +96,20 @@ docker run \
 
 ## Execute custom scripts or applications
 
-Put your programs in /etc/sftp.d/ and it will automatically run when the container starts.
+Put your programs in `/etc/sftp.d/` and it will automatically run when the container starts.
 See next section for an example.
 
 ## Bindmount dirs from another location
 
-If you are using --volumes-from or just want to make a custom directory
-available in user's home directory, you can add a script to /etc/sftp.d/ that
+If you are using `--volumes-from` or just want to make a custom directory
+available in user's home directory, you can add a script to `/etc/sftp.d/` that
 bindmounts after container starts.
 
 ```
 #!/bin/bash
-# Just an example (make your own):
+# File mounted as: /etc/sftp.d/bindmount.sh
+# Just an example (make your own)
+
 function bindmount() {
     if [ -d "$1" ]; then
         mkdir -p "$2"
@@ -115,7 +117,7 @@ function bindmount() {
     mount --bind $3 "$1" "$2"
 }
 
-# Remember permissions, you may have to fix it:
+# Remember permissions, you may have to fix them:
 # chown -R :users /data/common
 
 bindmount /data/admin-tools /home/admin/tools
