@@ -77,8 +77,8 @@ docker run \
     'foo:$1$0G2g0GSt$ewU0t6GXG15.0hWoOX8X9.:e:1001'
 ```
 
-Tip: you can use [makepasswd](https://packages.debian.org/jessie/makepasswd) (included in the debian image) to generate encrypted passwords:  
-`echo -n "password" | docker run -i --rm --entrypoint=makepasswd atmoz/sftp:debian --crypt-md5 --clearfrom -`
+Tip: you can use [atmoz/makepasswd](https://hub.docker.com/r/atmoz/makepasswd/) to generate encrypted passwords:  
+`echo -n "your-password" | docker run -i --rm atmoz/makepasswd --crypt-md5 --clearfrom=-`
 
 ## Using SSH key (without password)
 
