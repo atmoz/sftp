@@ -77,14 +77,13 @@ function createUser() {
 
     # Make sure dirs exists and has correct permissions
     if [ -n "$dir" ]; then
-        while IFS=',' read -ra dirParam; do
-            for dirPath in $dirParam; do
-                dirPath=/home/$user/$dirPath
-                echo "Creating and/or setting permissions on $dirPath"
-                mkdir -p $dirPath
-                chown -R $user:users $dirPath
-            done
-        done <<< $dir
+        IFS=',' read -a dirParam <<< $dir
+        for dirPath in ${dirParam[@]}; do
+            dirPath=/home/$user/$dirPath
+            echo "Creating and/or setting permissions on $dirPath"
+            mkdir -p $dirPath
+            chown -R $user:users $dirPath
+        done
     fi
 }
 

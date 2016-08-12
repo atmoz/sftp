@@ -97,7 +97,7 @@ Tip: you can use [atmoz/makepasswd](https://hub.docker.com/r/atmoz/makepasswd/) 
 
 ## Using SSH key (and no password)
 
-Mount all public keys in the user's `.ssh/keys/` direcotry. All keys are automatically
+Mount all public keys in the user's `.ssh/keys/` directory. All keys are automatically
 appended to `.ssh/authorized_keys`.
 
 ```
