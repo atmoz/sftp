@@ -36,7 +36,7 @@ function beforeTest() {
     rm -rf "$tmpDir" # clean state
     mkdir "$tmpDir"
 
-    echo "test::$(id -u):$(id -g):dir" >> "$tmpDir/users"
+    echo "test::$(id -u):$(id -g):share,dir1,dir2" >> "$tmpDir/users"
     docker run \
         -v "$tmpDir/users:/etc/sftp-users.conf:ro" \
         -v "$scriptDir/id_rsa.pub":/home/test/.ssh/keys/id_rsa.pub:ro \
@@ -123,11 +123,16 @@ function testDir() {
 
     runSftpCommands "$sftpContainerName" \
         "test" \
-        "cd dir" \
-        "mkdir test2" \
-        "get -rf test2 $tmpDir/" \
+        "cd dir1" \
+        "mkdir test-dir1" \
+        "get -rf test-dir1 $tmpDir/" \
+        "cd ../dir2" \
+        "mkdir test-dir2" \
+        "get -rf test-dir2 $tmpDir/" \
         "exit"
-    test -d "$tmpDir/test2"
+    test -d "$tmpDir/test-dir1"
+    assertReturn $? 0
+    test -d "$tmpDir/test-dir2"
     assertReturn $? 0
 }
 

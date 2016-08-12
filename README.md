@@ -15,9 +15,9 @@ This is an automated build linked with the [debian](https://hub.docker.com/_/deb
   - Set UID/GID manually for your users if you want them to make changes to
     your mounted volumes with permissions matching your host filesystem.
   - Add directory names at the end, if you want to create them and/or set user
-    owership. Perfect when you just want a fast way to upload something without
+    ownership. Perfect when you just want a fast way to upload something without
     mounting any directories, or you want to make sure a directory is owned by
-    a user.
+    a user (chown -R).
 - Mount volumes in user's home direcotry.
   - The users are chrooted to their home directory, so you must mount the
     volumes in separate directories inside the user's home directory
@@ -97,7 +97,7 @@ Tip: you can use [atmoz/makepasswd](https://hub.docker.com/r/atmoz/makepasswd/) 
 
 ## Using SSH key (and no password)
 
-Mount all public keys in the user's `.ssh/keys/` direcotry. All keys are automatically
+Mount all public keys in the user's `.ssh/keys/` directory. All keys are automatically
 appended to `.ssh/authorized_keys`.
 
 ```
