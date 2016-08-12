@@ -10,18 +10,33 @@ This is an automated build linked with the [debian](https://hub.docker.com/_/deb
 
 # Usage
 
-- Define users as command arguments, STDIN or mounted in /etc/sftp-users.conf
-  (syntax: `user:pass[:e][:uid[:gid]]...`).
-  - You must set custom UID for your users if you want them to make changes to
+- Define users as command arguments, STDIN or mounted in `/etc/sftp-users.conf`
+  (syntax: `user:pass[:e][:uid[:gid[:dir1[,dir2]...]]]...`).
+  - Set UID/GID manually for your users if you want them to make changes to
     your mounted volumes with permissions matching your host filesystem.
-- Mount volumes in user's home folder.
+  - Add directory names at the end, if you want to create them and/or set user
+    owership. Perfect when you just want a fast way to upload something without
+    mounting any directories, or you want to make sure a directory is owned by
+    a user.
+- Mount volumes in user's home direcotry.
   - The users are chrooted to their home directory, so you must mount the
     volumes in separate directories inside the user's home directory
     (/home/user/**mounted-directory**).
 
 # Examples
 
-## Simple docker run example
+
+## Simplest docker run example
+
+```
+docker run -p 22:22 -d atmoz/sftp foo:pass:::upload
+```
+
+No mounted directories or custom UID/GID. User "foo" with password "pass" can login with sftp and upload files to a folder called "upload". Later you can inspect the files and use `--volumes-from` to mount them somewhere else (or see next example).
+
+## Sharing a directory from your computer
+
+Let's mount a direcotry and set UID:
 
 ```
 docker run \
@@ -77,12 +92,12 @@ docker run \
     'foo:$1$0G2g0GSt$ewU0t6GXG15.0hWoOX8X9.:e:1001'
 ```
 
-Tip: you can use makepasswd to generate encrypted passwords:  
-`echo -n "password" | makepasswd --crypt-md5 --clearfrom -`
+Tip: you can use [atmoz/makepasswd](https://hub.docker.com/r/atmoz/makepasswd/) to generate encrypted passwords:  
+`echo -n "your-password" | docker run -i --rm atmoz/makepasswd --crypt-md5 --clearfrom=-`
 
-## Using SSH key (without password)
+## Using SSH key (and no password)
 
-Mount all public keys in the user's `.ssh/keys/` folder. All keys are automatically
+Mount all public keys in the user's `.ssh/keys/` direcotry. All keys are automatically
 appended to `.ssh/authorized_keys`.
 
 ```
@@ -96,18 +111,20 @@ docker run \
 
 ## Execute custom scripts or applications
 
-Put your programs in /etc/sftp.d/ and it will automatically run when the container starts.
+Put your programs in `/etc/sftp.d/` and it will automatically run when the container starts.
 See next section for an example.
 
 ## Bindmount dirs from another location
 
-If you are using --volumes-from or just want to make a custom directory
-available in user's home directory, you can add a script to /etc/sftp.d/ that
+If you are using `--volumes-from` or just want to make a custom directory
+available in user's home directory, you can add a script to `/etc/sftp.d/` that
 bindmounts after container starts.
 
 ```
 #!/bin/bash
-# Just an example (make your own):
+# File mounted as: /etc/sftp.d/bindmount.sh
+# Just an example (make your own)
+
 function bindmount() {
     if [ -d "$1" ]; then
         mkdir -p "$2"
@@ -115,7 +132,7 @@ function bindmount() {
     mount --bind $3 "$1" "$2"
 }
 
-# Remember permissions, you may have to fix it:
+# Remember permissions, you may have to fix them:
 # chown -R :users /data/common
 
 bindmount /data/admin-tools /home/admin/tools
