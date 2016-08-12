@@ -7,7 +7,7 @@ userConfFinalPath="/var/run/sftp-users.conf"
 
 function printHelp() {
     echo "Add users as command arguments, STDIN or mounted in $userConfPath"
-    echo "Syntax: user:pass[:e][:uid[:gid]]..."
+    echo "Syntax: user:pass[:e][:uid[:gid[:dir1[,dir2]...]]] ..."
     echo "Use --readme for more information and examples."
 }
 
@@ -25,9 +25,11 @@ function createUser() {
         chpasswdOptions="-e"
         uid="${param[3]}"
         gid="${param[4]}"
+        dir="${param[5]}"
     else
         uid="${param[2]}"
         gid="${param[3]}"
+        dir="${param[4]}"
     fi
 
     if [ -z "$user" ]; then
@@ -71,6 +73,18 @@ function createUser() {
         cat /home/$user/.ssh/keys/* >> /home/$user/.ssh/authorized_keys
         chown $user /home/$user/.ssh/authorized_keys
         chmod 600 /home/$user/.ssh/authorized_keys
+    fi
+
+    # Make sure dirs exists and has correct permissions
+    if [ -n "$dir" ]; then
+        while IFS=',' read -ra dirParam; do
+            for dirPath in $dirParam; do
+                dirPath=/home/$user/$dirPath
+                echo "Creating and/or setting permissions on $dirPath"
+                mkdir -p $dirPath
+                chown -R $user:users $dirPath
+            done
+        done <<< $dir
     fi
 }
 
@@ -128,7 +142,10 @@ fi
 # Source custom scripts, if any
 if [ -d /etc/sftp.d ]; then
     for f in /etc/sftp.d/*; do
-        [ -x "$f" ] && . "$f"
+        if [ -x "$f" ]; then
+            echo "Running $f ..."
+            $f
+        fi
     done
     unset f
 fi

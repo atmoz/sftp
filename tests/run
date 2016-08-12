@@ -36,7 +36,7 @@ function beforeTest() {
     rm -rf "$tmpDir" # clean state
     mkdir "$tmpDir"
 
-    echo "test::$(id -u):$(id -g)" >> "$tmpDir/users"
+    echo "test::$(id -u):$(id -g):dir" >> "$tmpDir/users"
     docker run \
         -v "$tmpDir/users:/etc/sftp-users.conf:ro" \
         -v "$scriptDir/id_rsa.pub":/home/test/.ssh/keys/id_rsa.pub:ro \
@@ -86,6 +86,51 @@ function runSftpCommands() {
 
 ##############################################################################
 
+function testContainerIsRunning() {
+    $skipAllTests && skip && return 0
+
+    ps="$(docker ps -q -f name="$sftpContainerName")"
+    assertNotEqual "$ps" ""
+
+    if [ -z "$ps" ]; then
+        skipAllTests=true
+    fi
+}
+
+function testLoginUsingSshKey() {
+    $skipAllTests && skip && return 0
+
+    runSftpCommands "$sftpContainerName" \
+        "test" \
+        "exit"
+    assertReturn $? 0
+}
+
+function testWritePermission() {
+    $skipAllTests && skip && return 0
+
+    runSftpCommands "$sftpContainerName" \
+        "test" \
+        "cd share" \
+        "mkdir test" \
+        "exit"
+    test -d "$tmpDir/test"
+    assertReturn $? 0
+}
+
+function testDir() {
+    $skipAllTests && skip && return 0
+
+    runSftpCommands "$sftpContainerName" \
+        "test" \
+        "cd dir" \
+        "mkdir test2" \
+        "get -rf test2 $tmpDir/" \
+        "exit"
+    test -d "$tmpDir/test2"
+    assertReturn $? 0
+}
+
 function testMinimalContainerStart() {
     $skipAllTests && skip && return 0
 
@@ -112,32 +157,6 @@ function testMinimalContainerStart() {
     if [ "$cleanup" == "cleanup" ]; then
         docker rm -fv "$tmpContainerName" > "$redirect"
     fi
-}
-
-function testContainerIsRunning() {
-    $skipAllTests && skip && return 0
-
-    ps="$(docker ps -q -f name="$sftpContainerName")"
-    assertNotEqual "$ps" ""
-
-    if [ -z "$ps" ]; then
-        skipAllTests=true
-    fi
-}
-
-function testLoginUsingSshKey() {
-    $skipAllTests && skip && return 0
-
-    runSftpCommands "$sftpContainerName" "test" "exit"
-    assertReturn $? 0
-}
-
-function testWritePermission() {
-    $skipAllTests && skip && return 0
-
-    runSftpCommands "$sftpContainerName" "test" "cd share" "mkdir test" "exit"
-    test -d "$tmpDir/test"
-    assertReturn $? 0
 }
 
 # Bind-mount folder using script in /etc/sftp.d/

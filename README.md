@@ -11,17 +11,32 @@ This is an automated build linked with the [debian](https://hub.docker.com/_/deb
 # Usage
 
 - Define users as command arguments, STDIN or mounted in `/etc/sftp-users.conf`
-  (syntax: `user:pass[:e][:uid[:gid]]...`).
-  - You must set custom UID for your users if you want them to make changes to
+  (syntax: `user:pass[:e][:uid[:gid[:dir1[,dir2]...]]]...`).
+  - Set UID/GID manually for your users if you want them to make changes to
     your mounted volumes with permissions matching your host filesystem.
-- Mount volumes in user's home folder.
+  - Add directory names at the end, if you want to create them and/or set user
+    owership. Perfect when you just want a fast way to upload something without
+    mounting any directories, or you want to make sure a directory is owned by
+    a user.
+- Mount volumes in user's home direcotry.
   - The users are chrooted to their home directory, so you must mount the
     volumes in separate directories inside the user's home directory
     (/home/user/**mounted-directory**).
 
 # Examples
 
-## Simple docker run example
+
+## Simplest docker run example
+
+```
+docker run -p 22:22 -d atmoz/sftp foo:pass:::upload
+```
+
+No mounted directories or custom UID/GID. User "foo" with password "pass" can login with sftp and upload files to a folder called "upload". Later you can inspect the files and use `--volumes-from` to mount them somewhere else (or see next example).
+
+## Sharing a directory from your computer
+
+Let's mount a direcotry and set UID:
 
 ```
 docker run \
@@ -80,9 +95,9 @@ docker run \
 Tip: you can use [atmoz/makepasswd](https://hub.docker.com/r/atmoz/makepasswd/) to generate encrypted passwords:  
 `echo -n "your-password" | docker run -i --rm atmoz/makepasswd --crypt-md5 --clearfrom=-`
 
-## Using SSH key (without password)
+## Using SSH key (and no password)
 
-Mount all public keys in the user's `.ssh/keys/` folder. All keys are automatically
+Mount all public keys in the user's `.ssh/keys/` direcotry. All keys are automatically
 appended to `.ssh/authorized_keys`.
 
 ```
