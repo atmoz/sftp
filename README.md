@@ -1,7 +1,7 @@
 # Supported tags and respective `Dockerfile` links
 
-- [`debian-jessie`, `debian`, `latest` (*Dockerfile*)](https://github.com/atmoz/sftp/blob/master/Dockerfile)
-- [`alpine-3.4`, `alpine` (*Dockerfile*)](https://github.com/atmoz/sftp/blob/alpine/Dockerfile)
+- [`debian-jessie`, `debian`, `latest` (*Dockerfile*)](https://github.com/atmoz/sftp/blob/master/Dockerfile) [![](https://images.microbadger.com/badges/image/atmoz/sftp.svg)](http://microbadger.com/images/atmoz/sftp "Get your own image badge on microbadger.com")
+- [`alpine-3.4`, `alpine` (*Dockerfile*)](https://github.com/atmoz/sftp/blob/alpine/Dockerfile) [![](https://images.microbadger.com/badges/image/atmoz/sftp:alpine.svg)](http://microbadger.com/images/atmoz/sftp "Get your own image badge on microbadger.com")
 
 # Securely share your files
 
@@ -18,7 +18,7 @@ This is an automated build linked with the [debian](https://hub.docker.com/_/deb
     ownership. Perfect when you just want a fast way to upload something without
     mounting any directories, or you want to make sure a directory is owned by
     a user (chown -R).
-- Mount volumes in user's home direcotry.
+- Mount volumes in user's home directory.
   - The users are chrooted to their home directory, so you must mount the
     volumes in separate directories inside the user's home directory
     (/home/user/**mounted-directory**).
@@ -32,11 +32,11 @@ This is an automated build linked with the [debian](https://hub.docker.com/_/deb
 docker run -p 22:22 -d atmoz/sftp foo:pass:::upload
 ```
 
-No mounted directories or custom UID/GID. User "foo" with password "pass" can login with sftp and upload files to a folder called "upload". Later you can inspect the files and use `--volumes-from` to mount them somewhere else (or see next example).
+User "foo" with password "pass" can login with sftp and upload files to a folder called "upload". No mounted directories or custom UID/GID. Later you can inspect the files and use `--volumes-from` to mount them somewhere else (or see next example).
 
 ## Sharing a directory from your computer
 
-Let's mount a direcotry and set UID:
+Let's mount a directory and set UID:
 
 ```
 docker run \
