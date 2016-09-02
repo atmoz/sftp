@@ -50,7 +50,7 @@ function createUser() {
 
     if [ -n "$gid" ]; then
         if ! $(cat /etc/group | cut -d: -f3 | grep -q "$gid"); then
-            groupadd --gid $gid $gid
+            groupadd --gid $gid "group_$gid"
         fi
 
         useraddOptions="$useraddOptions --gid $gid"
