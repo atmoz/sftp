@@ -37,9 +37,9 @@ function createUser() {
         exit 1
     fi
 
-    if $(cat /etc/passwd | cut -d: -f1 | grep -q "$user"); then
-        echo "FATAL: User \"$user\" already exists."
-        exit 2
+    if $(cat /etc/passwd | cut -d: -f1 | grep -q "^$user:"); then
+        echo "WARNING: User \"$user\" already exists. Skipping."
+        return 0
     fi
 
     useraddOptions="--no-user-group"
