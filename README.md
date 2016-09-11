@@ -109,6 +109,31 @@ docker run \
     foo::1001
 ```
 
+## Using custom SSH key for server
+
+This container will generate an ssh-key for OpenSSH at first run. To avoid this, you can map Ed25519 or RSA keys from the host inside the container.
+
+### Ed25519 key
+```
+docker run \
+    -v /host/ssh_host_ed25519_key:/etc/ssh/ssh_host_ed25519_key \
+    -v /host/share:/home/foo/share \
+    -p 2222:22 -d atmoz/sftp \
+    foo::1001
+```
+Tip: you can generate an Ed25519 key with this command: `ssh-keygen -t ed25519 -f /host/ssh_host_ed25519_key < /dev/null`
+
+### RSA key
+```
+docker run \
+    -v /host/ssh_host_rsa_key:/etc/ssh/ssh_host_rsa_key \
+    -v /host/share:/home/foo/share \
+    -p 2222:22 -d atmoz/sftp \
+    foo::1001
+```
+Tip: you can generate an Ed25519 key with this command: `ssh-keygen -t rsa -b 4096 -f /etc/ssh/ssh_host_rsa_key < /dev/null`
+
+
 ## Execute custom scripts or applications
 
 Put your programs in `/etc/sftp.d/` and it will automatically run when the container starts.
