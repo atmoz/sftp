@@ -19,15 +19,19 @@ else
     redirect="/dev/stdout"
 fi
 
+buildOptions="--tag $sftpImageName"
+
 ##############################################################################
 
 function beforeTest() {
     if [ "$build" == "build" ]; then
-        docker build --pull=true --tag "$sftpImageName" "$buildDir"
-        if [ $? -gt 0 ]; then
-            echo "Build failed"
-            exit 1
-        fi
+        buildOptions="$buildOptions --no-cache --pull=true"
+    fi
+
+    docker build $buildOptions "$buildDir"
+    if [ $? -gt 0 ]; then
+        echo "Build failed"
+        exit 1
     fi
 
     # Private key can not be read by others
@@ -81,7 +85,6 @@ function runSftpCommands() {
         -b - $user@$ip \
         > "$redirect" 2>&1
 
-    sleep 1 # wait for command to finish
 }
 
 ##############################################################################
