@@ -61,12 +61,11 @@ function createUser() {
     chown root:root /home/$user
     chmod 755 /home/$user
 
-    if [ -z "$pass" ]; then
-        pass="$(tr -dc A-Za-z0-9 </dev/urandom | head -c256)"
-        chpasswdOptions=""
+    if [ -n "$pass" ]; then
+        echo "$user:$pass" | chpasswd $chpasswdOptions
+    else
+        usermod -p "*" $user # disabled password
     fi
-
-    echo "$user:$pass" | chpasswd $chpasswdOptions
 
     # Add SSH keys to authorized_keys with valid permissions
     if [ -d /home/$user/.ssh/keys ]; then
