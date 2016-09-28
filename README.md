@@ -114,21 +114,18 @@ docker run \
 This container will generate an ssh-key for OpenSSH at first run. To avoid this, you can map Ed25519 or RSA keys from the host inside the container.
 
 ```
-#for ed25519 keys:
 docker run \
     -v /host/ssh_host_ed25519_key:/etc/ssh/ssh_host_ed25519_key \
-    -v /host/share:/home/foo/share \
-    -p 2222:22 -d atmoz/sftp \
-    foo::1001
-#Tip: you can generate an Ed25519 key with this command: `ssh-keygen -t ed25519 -f /host/ssh_host_ed25519_key < /dev/null`
-    
-#for rsa keys:
-docker run \
     -v /host/ssh_host_rsa_key:/etc/ssh/ssh_host_rsa_key \
     -v /host/share:/home/foo/share \
     -p 2222:22 -d atmoz/sftp \
     foo::1001
-#Tip: you can generate an rsa key with this command: `ssh-keygen -t rsa -b 4096 -f /etc/ssh/ssh_host_rsa_key < /dev/null`
+```
+
+Tip: you can generate keys with this commands:
+```
+ssh-keygen -t ed25519 -f /host/ssh_host_ed25519_key < /dev/null
+ssh-keygen -t rsa -b 4096 -f /etc/ssh/ssh_host_rsa_key < /dev/null
 ```
 
 ## Execute custom scripts or applications
