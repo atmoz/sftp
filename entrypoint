@@ -5,6 +5,8 @@ export DEBIAN_FRONTEND=noninteractive
 userConfPath="/etc/sftp-users.conf"
 userConfFinalPath="/var/run/sftp-users.conf"
 
+chmod +x /etc/sftp.d/*.sh
+
 function printHelp() {
     echo "Add users as command arguments, STDIN or mounted in $userConfPath"
     echo "Syntax: user:pass[:e][:uid[:gid[:dir1[,dir2]...]]] ..."
