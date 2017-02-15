@@ -20,15 +20,11 @@ This is an automated build linked with the [debian](https://hub.docker.com/_/deb
 - Optional (but recommended): mount volumes.
   - The users are chrooted to their home directory, so you can mount the
     volumes in separate directories inside the user's home directory
-    (/home/user/**mounted-directory**) or just mount the whole /home directory.
+    (/home/user/**mounted-directory**) or just mount the whole **/home** directory.
     Just remember that the users can't create new files directly under their
     own home directory, so make sure there are at least one subdirectory if you
     want them to upload files.
   - For consistent server fingerprint, mount your own host keys (i.e. `/etc/ssh/ssh_host_*`)
-
-# What's the difference between Debian and Alpine?
-
-The biggest differences are in size and OpenSSH version. [Alpine](https://hub.docker.com/_/alpine/) is 10 times smaller than [Debian](https://hub.docker.com/_/debian/). OpenSSH version can also differ, as it is two different teams maintaining the packages. Debian is generally considered more stable and only bugfixes and security fixes are added after each Debian release (about 2 years). Alpine has a faster release cyle (about 6 months) and therefore newer versions of OpenSSH. As I'm writing this, Debian has version 6.7 while Alpine has version 7.4. Recommended reading: [Comparing Debian vs Alpine for container & Docker apps](https://www.turnkeylinux.org/blog/alpine-vs-debian)
 
 # Examples
 
@@ -42,13 +38,13 @@ User "foo" with password "pass" can login with sftp and upload files to a folder
 
 ## Sharing a directory from your computer
 
-Let's mount a directory and set UID:
+Let's mount a directory and set UID (we will also provide our own hostkeys):
 
 ```
 docker run \
     -v /host/upload:/home/foo/upload \
-    -v /host/ssh_host_ed25519_key:/etc/ssh/ssh_host_ed25519_key \
     -v /host/ssh_host_rsa_key:/etc/ssh/ssh_host_rsa_key \
+    -v /host/ssh_host_rsa_key.pub:/etc/ssh/ssh_host_rsa_key.pub \
     -p 2222:22 -d atmoz/sftp \
     foo:pass:1001
 ```
@@ -60,8 +56,8 @@ sftp:
     image: atmoz/sftp
     volumes:
         - /host/upload:/home/foo/upload
-        - /host/ssh_host_ed25519_key:/etc/ssh/ssh_host_ed25519_key
         - /host/ssh_host_rsa_key:/etc/ssh/ssh_host_rsa_key
+        - /host/ssh_host_rsa_key.pub:/etc/ssh/ssh_host_rsa_key.pub
     ports:
         - "2222:22"
     command: foo:pass:1001
@@ -79,8 +75,8 @@ OpenSSH client, run: `sftp -P 2222 foo@<host-ip>`
 docker run \
     -v /host/users.conf:/etc/sftp-users.conf:ro \
     -v mySftpVolume:/home \
-    -v /host/ssh_host_ed25519_key:/etc/ssh/ssh_host_ed25519_key \
     -v /host/ssh_host_rsa_key:/etc/ssh/ssh_host_rsa_key \
+    -v /host/ssh_host_rsa_key.pub:/etc/ssh/ssh_host_rsa_key.pub \
     -p 2222:22 -d atmoz/sftp
 ```
 
@@ -151,3 +147,15 @@ bindmount /data/common /home/dave/common
 bindmount /data/common /home/peter/common
 bindmount /data/docs /home/peter/docs --read-only
 ```
+
+# What's the difference between Debian and Alpine?
+
+The biggest differences are in size and OpenSSH version.
+[Alpine](https://hub.docker.com/_/alpine/) is 10 times smaller than
+[Debian](https://hub.docker.com/_/debian/). OpenSSH version can also differ, as
+it's two different teams maintaining the packages. Debian is generally
+considered more stable and only bugfixes and security fixes are added after
+each Debian release (about 2 years). Alpine has a faster release cycle (about 6
+months) and therefore newer versions of OpenSSH. As I'm writing this, Debian
+has version 6.7 while Alpine has version 7.4. Recommended reading:
+[Comparing Debian vs Alpine for container & Docker apps](https://www.turnkeylinux.org/blog/alpine-vs-debian)
