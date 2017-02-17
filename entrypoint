@@ -96,6 +96,16 @@ if [ "$1" == "--readme" ]; then
     exit 0
 fi
 
+# Add user to an existing container (with docker exec )
+if [ "$1" == "--adduser" ]; then
+  shift
+  for user in "$@"; do
+     echo "$user" >> "$userConfFinalPath"
+     createUser "$user"
+  done
+  exit 0
+fi
+
 # Create users only on first run
 if [ ! -f "$userConfFinalPath" ]; then
 
