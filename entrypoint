@@ -2,8 +2,8 @@
 set -e
 export DEBIAN_FRONTEND=noninteractive
 
-userConfPath="/etc/sftp-users.conf"
-userConfFinalPath="/var/run/sftp-users.conf"
+userConfPath="/etc/sftp/sftp-users.conf"
+userConfFinalPath="/var/run/sftp/sftp-users.conf"
 
 function printHelp() {
     echo "Add users as command arguments, STDIN or mounted in $userConfPath"
