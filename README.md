@@ -73,7 +73,7 @@ OpenSSH client, run: `sftp -P 2222 foo@<host-ip>`
 
 ```
 docker run \
-    -v /host/users.conf:/etc/sftp-users.conf:ro \
+    -v /host/users.conf:/etc/sftp/sftp-users.conf:ro \
     -v mySftpVolume:/home \
     -v /host/ssh_host_rsa_key:/etc/ssh/ssh_host_rsa_key \
     -v /host/ssh_host_rsa_key.pub:/etc/ssh/ssh_host_rsa_key.pub \
