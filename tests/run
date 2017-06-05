@@ -7,6 +7,9 @@ scriptDir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 buildDir="$scriptDir/.."
 tmpDir="/tmp/atmoz_sftp_test"
 
+sudo="sudo"
+cache="--no-cache"
+
 build=${1:-"build"}
 output=${2:-"quiet"}
 cleanup=${3:-"cleanup"}
@@ -25,10 +28,10 @@ buildOptions="--tag $sftpImageName"
 
 function beforeTest() {
     if [ "$build" == "build" ]; then
-        buildOptions="$buildOptions --no-cache --pull=true"
+        buildOptions="$buildOptions $cache --pull=true"
     fi
 
-    docker build $buildOptions "$buildDir"
+    $sudo docker build $buildOptions "$buildDir"
     if [ $? -gt 0 ]; then
         echo "Build failed"
         exit 1
@@ -41,7 +44,7 @@ function beforeTest() {
     mkdir "$tmpDir"
 
     echo "test::$(id -u):$(id -g):dir1,dir2" >> "$tmpDir/users"
-    docker run \
+    $sudo docker run \
         -v "$tmpDir/users:/etc/sftp-users.conf:ro" \
         -v "$scriptDir/id_rsa.pub":/home/test/.ssh/keys/id_rsa.pub:ro \
         -v "$tmpDir":/home/test/share \
@@ -49,23 +52,24 @@ function beforeTest() {
         --expose 22 \
         -d "$sftpImageName" \
         > "$redirect"
-    sleep 2 # wait for sftp server to get ready
+
+    waitForServer $sftpContainerName
 }
 
 function afterTest() {
     if [ "$output" != "quiet" ]; then
         echo "Docker logs:"
-        docker logs "$sftpContainerName"
+        $sudo docker logs "$sftpContainerName"
     fi
 
     if [ "$cleanup" == "cleanup" ]; then
-        docker rm -fv "$sftpContainerName" > "$redirect"
+        $sudo docker rm -fv "$sftpContainerName" > "$redirect"
         rm -rf "$tmpDir"
     fi
 }
 
 function getSftpIp() {
-    docker inspect -f {{.NetworkSettings.IPAddress}} "$1"
+    $sudo docker inspect -f {{.NetworkSettings.IPAddress}} "$1"
 }
 
 function runSftpCommands() {
@@ -85,6 +89,27 @@ function runSftpCommands() {
         -b - $user@$ip \
         > "$redirect" 2>&1
 
+    status=$?
+    sleep 1 # wait for commands to finish
+    return $status
+}
+
+function waitForServer() {
+    containerName="$1"
+    echo -n "Waiting for $containerName to open port 22 "
+
+    for i in {1..30}; do
+        sleep 1
+        ip="$(getSftpIp $containerName)"
+        echo -n "."
+        if nc -z $ip 22; then
+            echo " OK"
+            return 0;
+        fi
+    done
+
+    echo " FAIL"
+    return 1
 }
 
 ##############################################################################
@@ -92,7 +117,7 @@ function runSftpCommands() {
 function testContainerIsRunning() {
     $skipAllTests && skip && return 0
 
-    ps="$(docker ps -q -f name="$sftpContainerName")"
+    ps="$($sudo docker ps -q -f name="$sftpContainerName")"
     assertNotEqual "$ps" ""
 
     if [ -z "$ps" ]; then
@@ -103,17 +128,14 @@ function testContainerIsRunning() {
 function testLoginUsingSshKey() {
     $skipAllTests && skip && return 0
 
-    runSftpCommands "$sftpContainerName" \
-        "test" \
-        "exit"
+    runSftpCommands "$sftpContainerName" "test" "exit"
     assertReturn $? 0
 }
 
 function testWritePermission() {
     $skipAllTests && skip && return 0
 
-    runSftpCommands "$sftpContainerName" \
-        "test" \
+    runSftpCommands "$sftpContainerName" "test" \
         "cd share" \
         "mkdir test" \
         "exit"
@@ -124,8 +146,7 @@ function testWritePermission() {
 function testDir() {
     $skipAllTests && skip && return 0
 
-    runSftpCommands "$sftpContainerName" \
-        "test" \
+    runSftpCommands "$sftpContainerName" "test" \
         "cd dir1" \
         "mkdir test-dir1" \
         "get -rf test-dir1 $tmpDir/" \
@@ -144,14 +165,15 @@ function testMinimalContainerStart() {
 
     tmpContainerName="$sftpContainerName""_minimal"
 
-    docker run \
+    $sudo docker run \
         --name "$tmpContainerName" \
         -d "$sftpImageName" \
         minimal \
         > "$redirect"
-    sleep 2
 
-    ps="$(docker ps -q -f name="$tmpContainerName")"
+    waitForServer $tmpContainerName
+
+    ps="$($sudo docker ps -q -f name="$tmpContainerName")"
     assertNotEqual "$ps" ""
 
     if [ -z "$ps" ]; then
@@ -159,11 +181,11 @@ function testMinimalContainerStart() {
     fi
 
     if [ "$output" != "quiet" ]; then
-        docker logs "$tmpContainerName"
+        $sudo docker logs "$tmpContainerName"
     fi
 
     if [ "$cleanup" == "cleanup" ]; then
-        docker rm -fv "$tmpContainerName" > "$redirect"
+        $sudo docker rm -fv "$tmpContainerName" > "$redirect"
     fi
 }
 
@@ -180,7 +202,7 @@ function testCustomContainerStart() {
         > "$tmpDir/mount.sh"
     chmod +x "$tmpDir/mount.sh"
 
-    docker run \
+    $sudo docker run \
         --privileged=true \
         --name "$tmpContainerName" \
         -v "$scriptDir/id_rsa.pub":/home/custom/.ssh/keys/id_rsa.pub:ro \
@@ -190,21 +212,26 @@ function testCustomContainerStart() {
         -d "$sftpImageName" \
         custom:123 \
         > "$redirect"
-    sleep 2
 
-    ps="$(docker ps -q -f name="$tmpContainerName")"
+    waitForServer $tmpContainerName
+
+    ps="$($sudo docker ps -q -f name="$tmpContainerName")"
     assertNotEqual "$ps" ""
 
-    runSftpCommands "$tmpContainerName" "custom" "cd bindmount" "mkdir test" "exit"
+    runSftpCommands "$tmpContainerName" "custom" \
+        "cd bindmount" \
+        "mkdir test" \
+        "exit"
+
     test -d "$tmpDir/custom/bindmount/test"
     assertReturn $? 0
 
     if [ "$output" != "quiet" ]; then
-        docker logs "$tmpContainerName"
+        $sudo docker logs "$tmpContainerName"
     fi
 
     if [ "$cleanup" == "cleanup" ]; then
-        docker rm -fv "$tmpContainerName" > "$redirect"
+        $sudo docker rm -fv "$tmpContainerName" > "$redirect"
     fi
 }
 
