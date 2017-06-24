@@ -174,6 +174,19 @@ bindmount /data/common /home/peter/common
 bindmount /data/docs /home/peter/docs --read-only
 ```
 
+# Add user to you container
+You can add users to your running container like this:
+
+with docker
+```
+docker exec <container_id> /entrypoint --adduser bar:abc:1004:100:incomming
+```
+
+with docker-compose
+```
+docker-compose exec sftp /entrypoint --adduser baz:xyz:1003:100
+```
+
 # What's the difference between Debian and Alpine?
 
 The biggest differences are in size and OpenSSH version.
