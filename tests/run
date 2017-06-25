@@ -44,9 +44,11 @@ function beforeTest() {
     mkdir "$tmpDir"
 
     echo "test::$(id -u):$(id -g):dir1,dir2" >> "$tmpDir/users"
+    echo "user.with.dot::$(id -u):$(id -g)" >> "$tmpDir/users"
     $sudo docker run \
-        -v "$tmpDir/users:/etc/sftp-users.conf:ro" \
+        -v "$tmpDir/users:/etc/sftp/users.conf:ro" \
         -v "$scriptDir/id_rsa.pub":/home/test/.ssh/keys/id_rsa.pub:ro \
+        -v "$scriptDir/id_rsa.pub":/home/user.with.dot/.ssh/keys/id_rsa.pub:ro \
         -v "$tmpDir":/home/test/share \
         --name "$sftpContainerName" \
         --expose 22 \
@@ -96,19 +98,19 @@ function runSftpCommands() {
 
 function waitForServer() {
     containerName="$1"
-    echo -n "Waiting for $containerName to open port 22 "
+    echo -n "Waiting for $containerName to open port 22 ..."
 
     for i in {1..30}; do
         sleep 1
         ip="$(getSftpIp $containerName)"
         echo -n "."
-        if nc -z $ip 22; then
-            echo " OK"
+        if [ -n "$ip" ] && nc -z $ip 22; then
+            echo " OPEN"
             return 0;
         fi
     done
 
-    echo " FAIL"
+    echo " TIMEOUT"
     return 1
 }
 
@@ -129,6 +131,13 @@ function testLoginUsingSshKey() {
     $skipAllTests && skip && return 0
 
     runSftpCommands "$sftpContainerName" "test" "exit"
+    assertReturn $? 0
+}
+
+function testUserWithDotLogin() {
+    $skipAllTests && skip && return 0
+
+    runSftpCommands "$sftpContainerName" "user.with.dot" "exit"
     assertReturn $? 0
 }
 
@@ -188,6 +197,34 @@ function testMinimalContainerStart() {
         $sudo docker rm -fv "$tmpContainerName" > "$redirect"
     fi
 }
+
+function testLegacyConfigPath() {
+    $skipAllTests && skip && return 0
+
+    tmpContainerName="$sftpContainerName""_legacy"
+
+    echo "test::$(id -u):$(id -g)" >> "$tmpDir/legacy_users"
+    $sudo docker run \
+        -v "$tmpDir/legacy_users:/etc/sftp-users.conf:ro" \
+        --name "$tmpContainerName" \
+        --expose 22 \
+        -d "$sftpImageName" \
+        > "$redirect"
+
+    waitForServer $tmpContainerName
+
+    ps="$($sudo docker ps -q -f name="$tmpContainerName")"
+    assertNotEqual "$ps" ""
+
+    if [ "$output" != "quiet" ]; then
+        $sudo docker logs "$tmpContainerName"
+    fi
+
+    if [ "$cleanup" == "cleanup" ]; then
+        $sudo docker rm -fv "$tmpContainerName" > "$redirect"
+    fi
+}
+
 
 # Bind-mount folder using script in /etc/sftp.d/
 function testCustomContainerStart() {
