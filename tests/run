@@ -44,9 +44,11 @@ function beforeTest() {
     mkdir "$tmpDir"
 
     echo "test::$(id -u):$(id -g):dir1,dir2" >> "$tmpDir/users"
+    echo "user.with.dot::$(id -u):$(id -g)" >> "$tmpDir/users"
     $sudo docker run \
         -v "$tmpDir/users:/etc/sftp/users.conf:ro" \
         -v "$scriptDir/id_rsa.pub":/home/test/.ssh/keys/id_rsa.pub:ro \
+        -v "$scriptDir/id_rsa.pub":/home/user.with.dot/.ssh/keys/id_rsa.pub:ro \
         -v "$tmpDir":/home/test/share \
         --name "$sftpContainerName" \
         --expose 22 \
@@ -129,6 +131,13 @@ function testLoginUsingSshKey() {
     $skipAllTests && skip && return 0
 
     runSftpCommands "$sftpContainerName" "test" "exit"
+    assertReturn $? 0
+}
+
+function testUserWithDotLogin() {
+    $skipAllTests && skip && return 0
+
+    runSftpCommands "$sftpContainerName" "user.with.dot" "exit"
     assertReturn $? 0
 }
 
