@@ -12,7 +12,7 @@ This is an automated build linked with the [debian](https://hub.docker.com/_/deb
 
 # Usage
 
-- Required: define users as command arguments, STDIN or mounted in `/etc/sftp-users.conf`
+- Required: define users as command arguments, STDIN or mounted in `/etc/sftp/users.conf`
   (syntax: `user:pass[:e][:uid[:gid[:dir1[,dir2]...]]]...`).
   - Set UID/GID manually for your users if you want them to make changes to
     your mounted volumes with permissions matching your host filesystem.
@@ -74,7 +74,7 @@ OpenSSH client, run: `sftp -P 2222 foo@<host-ip>`
 
 ```
 docker run \
-    -v /host/users.conf:/etc/sftp-users.conf:ro \
+    -v /host/users.conf:/etc/sftp/users.conf:ro \
     -v mySftpVolume:/home \
     -v /host/ssh_host_rsa_key:/etc/ssh/ssh_host_rsa_key \
     -v /host/ssh_host_rsa_key.pub:/etc/ssh/ssh_host_rsa_key.pub \
@@ -103,10 +103,13 @@ docker run \
 Tip: you can use [atmoz/makepasswd](https://hub.docker.com/r/atmoz/makepasswd/) to generate encrypted passwords:  
 `echo -n "your-password" | docker run -i --rm atmoz/makepasswd --crypt-md5 --clearfrom=-`
 
-## Using SSH key (and no password)
+## Logging in with SSH keys
 
-Mount all public keys in the user's `.ssh/keys/` directory. All keys are automatically
-appended to `.ssh/authorized_keys`.
+Mount public keys in the user's `.ssh/keys/` directory. All keys are
+automatically appended to `.ssh/authorized_keys` (you can't mount this file
+directly, because OpenSSH requires limited file permissions). In this example,
+we do not provide any password, so the user `foo` can only login with his SSH
+key.
 
 ```
 docker run \
@@ -115,6 +118,28 @@ docker run \
     -v /host/share:/home/foo/share \
     -p 2222:22 -d atmoz/sftp \
     foo::1001
+```
+
+## Providing your own SSH host key
+
+This container will generate new SSH host keys at first run. To avoid that your
+users get a MITM warning when you recreate your container (and the host keys
+changes), you can mount your own host keys.
+
+```
+docker run \
+    -v /host/ssh_host_ed25519_key:/etc/ssh/ssh_host_ed25519_key \
+    -v /host/ssh_host_rsa_key:/etc/ssh/ssh_host_rsa_key \
+    -v /host/share:/home/foo/share \
+    -p 2222:22 -d atmoz/sftp \
+    foo::1001
+```
+
+Tip: you can generate your keys with these commands:
+
+```
+ssh-keygen -t ed25519 -f /host/ssh_host_ed25519_key < /dev/null
+ssh-keygen -t rsa -b 4096 -f /etc/ssh/ssh_host_rsa_key < /dev/null
 ```
 
 ## Execute custom scripts or applications

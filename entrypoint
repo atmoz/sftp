@@ -2,8 +2,9 @@
 set -e
 export DEBIAN_FRONTEND=noninteractive
 
-userConfPath="/etc/sftp-users.conf"
-userConfFinalPath="/var/run/sftp-users.conf"
+userConfPath="/etc/sftp/users.conf"
+userConfPathLegacy="/etc/sftp-users.conf"
+userConfFinalPath="/var/run/sftp/users.conf"
 
 function printHelp() {
     echo "Add users as command arguments, STDIN or mounted in $userConfPath"
@@ -61,6 +62,10 @@ function createUser() {
     chown root:root /home/$user
     chmod 755 /home/$user
 
+    # Retrieving user id to use it in chown commands instead of the user name
+    # to avoid problems on alpine when the user name contains a '.'
+    uid=`id $user -u`
+
     if [ -n "$pass" ]; then
         echo "$user:$pass" | chpasswd $chpasswdOptions
     else
@@ -70,7 +75,7 @@ function createUser() {
     # Add SSH keys to authorized_keys with valid permissions
     if [ -d /home/$user/.ssh/keys ]; then
         cat /home/$user/.ssh/keys/* >> /home/$user/.ssh/authorized_keys
-        chown $user /home/$user/.ssh/authorized_keys
+        chown $uid /home/$user/.ssh/authorized_keys
         chmod 600 /home/$user/.ssh/authorized_keys
     fi
 
@@ -81,7 +86,7 @@ function createUser() {
             dirPath=/home/$user/$dirPath
             echo "Creating and/or setting permissions on $dirPath"
             mkdir -p $dirPath
-            chown -R $user:users $dirPath
+            chown -R $uid:users $dirPath
         done
     fi
 }
@@ -96,8 +101,15 @@ if [ "$1" == "--readme" ]; then
     exit 0
 fi
 
+# Backward compatibility with legacy config path
+if [ ! -f "$userConfPath" -a -f "$userConfPathLegacy" ]; then
+    mkdir -p "$(dirname $userConfPath)"
+    ln -s "$userConfPathLegacy" "$userConfPath"
+fi
+
 # Create users only on first run
 if [ ! -f "$userConfFinalPath" ]; then
+    mkdir -p "$(dirname $userConfFinalPath)"
 
     # Append mounted config to final config
     if [ -f "$userConfPath" ]; then
