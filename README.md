@@ -1,11 +1,8 @@
 # SFTP
 
-![Docker Automated build](https://img.shields.io/docker/automated/atmoz/sftp.svg)
-![Docker Build Status](https://img.shields.io/docker/build/atmoz/sftp.svg)
-![Docker Stars](https://img.shields.io/docker/stars/atmoz/sftp.svg)
-![Docker Pulls](https://img.shields.io/docker/pulls/atmoz/sftp.svg)
+![Docker Automated build](https://img.shields.io/docker/automated/atmoz/sftp.svg) ![Docker Build Status](https://img.shields.io/docker/build/atmoz/sftp.svg) ![Docker Stars](https://img.shields.io/docker/stars/atmoz/sftp.svg) ![Docker Pulls](https://img.shields.io/docker/pulls/atmoz/sftp.svg)
 
-![OpenSSH logo](openssh.png "Powered by OpenSSH")
+![OpenSSH logo](https://raw.githubusercontent.com/atmoz/sftp/master/openssh.png "Powered by OpenSSH")
 
 # Supported tags and respective `Dockerfile` links
 
