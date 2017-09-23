@@ -185,3 +185,20 @@ each Debian release (about 2 years). Alpine has a faster release cycle (about 6
 months) and therefore newer versions of OpenSSH. As I'm writing this, Debian
 has version 6.7 while Alpine has version 7.4. Recommended reading:
 [Comparing Debian vs Alpine for container & Docker apps](https://www.turnkeylinux.org/blog/alpine-vs-debian)
+
+# What version of OpenSSH do I get?
+
+It depends on which linux distro and version you choose (see available images
+at the top). You can see what version you get by checking the distro's packages
+online. I have provided direct links below for easy access.
+
+- [List of `openssh` packages on Alpine releases](https://pkgs.alpinelinux.org/packages?name=openssh&branch=&repo=main&arch=x86_64)
+- [List of `openssh-server` packages on Debian releases](https://packages.debian.org/search?keywords=openssh-server&searchon=names&exact=1&suite=all&section=main)
+
+**Note:** The time when this image was last built can delay the availability of
+an OpenSSH release. Since this is an automated build linked with
+[debian](https://hub.docker.com/_/debian/) and
+[alpine](https://hub.docker.com/_/alpine/) repos, the build will depend on how
+often they push changes (out of my control).  Typically this can take 1-5 days,
+but it can also take longer. You can of course make this more predictable by
+cloning this repo and run your own build manually.
