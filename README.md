@@ -50,8 +50,6 @@ Let's mount a directory and set UID (we will also provide our own hostkeys):
 ```
 docker run \
     -v /host/upload:/home/foo/upload \
-    -v /host/ssh_host_rsa_key:/etc/ssh/ssh_host_rsa_key \
-    -v /host/ssh_host_rsa_key.pub:/etc/ssh/ssh_host_rsa_key.pub \
     -p 2222:22 -d atmoz/sftp \
     foo:pass:1001
 ```
@@ -63,8 +61,6 @@ sftp:
     image: atmoz/sftp
     volumes:
         - /host/upload:/home/foo/upload
-        - /host/ssh_host_rsa_key:/etc/ssh/ssh_host_rsa_key
-        - /host/ssh_host_rsa_key.pub:/etc/ssh/ssh_host_rsa_key.pub
     ports:
         - "2222:22"
     command: foo:pass:1001
@@ -82,8 +78,6 @@ OpenSSH client, run: `sftp -P 2222 foo@<host-ip>`
 docker run \
     -v /host/users.conf:/etc/sftp/users.conf:ro \
     -v mySftpVolume:/home \
-    -v /host/ssh_host_rsa_key:/etc/ssh/ssh_host_rsa_key \
-    -v /host/ssh_host_rsa_key.pub:/etc/ssh/ssh_host_rsa_key.pub \
     -p 2222:22 -d atmoz/sftp
 ```
 
@@ -126,7 +120,7 @@ docker run \
     foo::1001
 ```
 
-## Providing your own SSH host key
+## Providing your own SSH host key (recommended)
 
 This container will generate new SSH host keys at first run. To avoid that your
 users get a MITM warning when you recreate your container (and the host keys
@@ -144,8 +138,8 @@ docker run \
 Tip: you can generate your keys with these commands:
 
 ```
-ssh-keygen -t ed25519 -f /host/ssh_host_ed25519_key < /dev/null
-ssh-keygen -t rsa -b 4096 -f /etc/ssh/ssh_host_rsa_key < /dev/null
+ssh-keygen -t ed25519 -f ssh_host_ed25519_key < /dev/null
+ssh-keygen -t rsa -b 4096 -f ssh_host_rsa_key < /dev/null
 ```
 
 ## Execute custom scripts or applications
