@@ -1,9 +1,15 @@
+# SFTP
+
+![Docker Automated build](https://img.shields.io/docker/automated/atmoz/sftp.svg) ![Docker Build Status](https://img.shields.io/docker/build/atmoz/sftp.svg) ![Docker Stars](https://img.shields.io/docker/stars/atmoz/sftp.svg) ![Docker Pulls](https://img.shields.io/docker/pulls/atmoz/sftp.svg)
+
+![OpenSSH logo](https://raw.githubusercontent.com/atmoz/sftp/master/openssh.png "Powered by OpenSSH")
+
 # Supported tags and respective `Dockerfile` links
 
-- [`debian-jessie`, `debian`, `latest` (*Dockerfile*)](https://github.com/atmoz/sftp/blob/master/Dockerfile) [![](https://images.microbadger.com/badges/image/atmoz/sftp.svg)](http://microbadger.com/images/atmoz/sftp "Get your own image badge on microbadger.com")
+- [`debian-stretch`, `debian`, `latest` (*Dockerfile*)](https://github.com/atmoz/sftp/blob/master/Dockerfile) [![](https://images.microbadger.com/badges/image/atmoz/sftp.svg)](http://microbadger.com/images/atmoz/sftp "Get your own image badge on microbadger.com")
+- [`debian-jessie` (*Dockerfile*)](https://github.com/atmoz/sftp/blob/debian-jessie/Dockerfile) [![](https://images.microbadger.com/badges/image/atmoz/sftp:debian-jessie.svg)](http://microbadger.com/images/atmoz/sftp:debian-jessie "Get your own image badge on microbadger.com")
 - [`alpine-3.6`, `alpine` (*Dockerfile*)](https://github.com/atmoz/sftp/blob/alpine/Dockerfile) [![](https://images.microbadger.com/badges/image/atmoz/sftp:alpine.svg)](http://microbadger.com/images/atmoz/sftp:alpine "Get your own image badge on microbadger.com")
 - [`alpine-3.5` (*Dockerfile*)](https://github.com/atmoz/sftp/blob/alpine-3.5/Dockerfile) [![](https://images.microbadger.com/badges/image/atmoz/sftp:alpine-3.5.svg)](http://microbadger.com/images/atmoz/sftp:alpine "Get your own image badge on microbadger.com")
-- [`alpine-3.4` (*Dockerfile*)](https://github.com/atmoz/sftp/blob/alpine-3.4/Dockerfile) [![](https://images.microbadger.com/badges/image/atmoz/sftp:alpine-3.4.svg)](http://microbadger.com/images/atmoz/sftp:alpine-3.4 "Get your own image badge on microbadger.com")
 
 # Securely share your files
 
@@ -44,8 +50,6 @@ Let's mount a directory and set UID (we will also provide our own hostkeys):
 ```
 docker run \
     -v /host/upload:/home/foo/upload \
-    -v /host/ssh_host_rsa_key:/etc/ssh/ssh_host_rsa_key \
-    -v /host/ssh_host_rsa_key.pub:/etc/ssh/ssh_host_rsa_key.pub \
     -p 2222:22 -d atmoz/sftp \
     foo:pass:1001
 ```
@@ -57,8 +61,6 @@ sftp:
     image: atmoz/sftp
     volumes:
         - /host/upload:/home/foo/upload
-        - /host/ssh_host_rsa_key:/etc/ssh/ssh_host_rsa_key
-        - /host/ssh_host_rsa_key.pub:/etc/ssh/ssh_host_rsa_key.pub
     ports:
         - "2222:22"
     command: foo:pass:1001
@@ -76,8 +78,6 @@ OpenSSH client, run: `sftp -P 2222 foo@<host-ip>`
 docker run \
     -v /host/users.conf:/etc/sftp/users.conf:ro \
     -v mySftpVolume:/home \
-    -v /host/ssh_host_rsa_key:/etc/ssh/ssh_host_rsa_key \
-    -v /host/ssh_host_rsa_key.pub:/etc/ssh/ssh_host_rsa_key.pub \
     -p 2222:22 -d atmoz/sftp
 ```
 
@@ -120,7 +120,7 @@ docker run \
     foo::1001
 ```
 
-## Providing your own SSH host key
+## Providing your own SSH host key (recommended)
 
 This container will generate new SSH host keys at first run. To avoid that your
 users get a MITM warning when you recreate your container (and the host keys
@@ -138,8 +138,8 @@ docker run \
 Tip: you can generate your keys with these commands:
 
 ```
-ssh-keygen -t ed25519 -f /host/ssh_host_ed25519_key < /dev/null
-ssh-keygen -t rsa -b 4096 -f /etc/ssh/ssh_host_rsa_key < /dev/null
+ssh-keygen -t ed25519 -f ssh_host_ed25519_key < /dev/null
+ssh-keygen -t rsa -b 4096 -f ssh_host_rsa_key < /dev/null
 ```
 
 ## Execute custom scripts or applications
@@ -183,5 +183,22 @@ it's two different teams maintaining the packages. Debian is generally
 considered more stable and only bugfixes and security fixes are added after
 each Debian release (about 2 years). Alpine has a faster release cycle (about 6
 months) and therefore newer versions of OpenSSH. As I'm writing this, Debian
-has version 6.7 while Alpine has version 7.4. Recommended reading:
+has version 7.4 while Alpine has version 7.5. Recommended reading:
 [Comparing Debian vs Alpine for container & Docker apps](https://www.turnkeylinux.org/blog/alpine-vs-debian)
+
+# What version of OpenSSH do I get?
+
+It depends on which linux distro and version you choose (see available images
+at the top). You can see what version you get by checking the distro's packages
+online. I have provided direct links below for easy access.
+
+- [List of `openssh` packages on Alpine releases](https://pkgs.alpinelinux.org/packages?name=openssh&branch=&repo=main&arch=x86_64)
+- [List of `openssh-server` packages on Debian releases](https://packages.debian.org/search?keywords=openssh-server&searchon=names&exact=1&suite=all&section=main)
+
+**Note:** The time when this image was last built can delay the availability of
+an OpenSSH release. Since this is an automated build linked with
+[debian](https://hub.docker.com/_/debian/) and
+[alpine](https://hub.docker.com/_/alpine/) repos, the build will depend on how
+often they push changes (out of my control).  Typically this can take 1-5 days,
+but it can also take longer. You can of course make this more predictable by
+cloning this repo and run your own build manually.
