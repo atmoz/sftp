@@ -1,4 +1,4 @@
-FROM debian:jessie
+FROM debian:stretch
 MAINTAINER Adrian Dvergsdal [atmoz.net]
 
 # - Install packages

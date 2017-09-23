@@ -6,10 +6,10 @@
 
 # Supported tags and respective `Dockerfile` links
 
-- [`debian-jessie`, `debian`, `latest` (*Dockerfile*)](https://github.com/atmoz/sftp/blob/master/Dockerfile) [![](https://images.microbadger.com/badges/image/atmoz/sftp.svg)](http://microbadger.com/images/atmoz/sftp "Get your own image badge on microbadger.com")
+- [`debian-stretch`, `debian`, `latest` (*Dockerfile*)](https://github.com/atmoz/sftp/blob/master/Dockerfile) [![](https://images.microbadger.com/badges/image/atmoz/sftp.svg)](http://microbadger.com/images/atmoz/sftp "Get your own image badge on microbadger.com")
+- [`debian-jessie` (*Dockerfile*)](https://github.com/atmoz/sftp/blob/debian-jessie/Dockerfile) [![](https://images.microbadger.com/badges/image/atmoz/sftp:debian-jessie.svg)](http://microbadger.com/images/atmoz/sftp:debian-jessie "Get your own image badge on microbadger.com")
 - [`alpine-3.6`, `alpine` (*Dockerfile*)](https://github.com/atmoz/sftp/blob/alpine/Dockerfile) [![](https://images.microbadger.com/badges/image/atmoz/sftp:alpine.svg)](http://microbadger.com/images/atmoz/sftp:alpine "Get your own image badge on microbadger.com")
 - [`alpine-3.5` (*Dockerfile*)](https://github.com/atmoz/sftp/blob/alpine-3.5/Dockerfile) [![](https://images.microbadger.com/badges/image/atmoz/sftp:alpine-3.5.svg)](http://microbadger.com/images/atmoz/sftp:alpine "Get your own image badge on microbadger.com")
-- [`alpine-3.4` (*Dockerfile*)](https://github.com/atmoz/sftp/blob/alpine-3.4/Dockerfile) [![](https://images.microbadger.com/badges/image/atmoz/sftp:alpine-3.4.svg)](http://microbadger.com/images/atmoz/sftp:alpine-3.4 "Get your own image badge on microbadger.com")
 
 # Securely share your files
 
@@ -183,7 +183,7 @@ it's two different teams maintaining the packages. Debian is generally
 considered more stable and only bugfixes and security fixes are added after
 each Debian release (about 2 years). Alpine has a faster release cycle (about 6
 months) and therefore newer versions of OpenSSH. As I'm writing this, Debian
-has version 6.7 while Alpine has version 7.4. Recommended reading:
+has version 7.4 while Alpine has version 7.5. Recommended reading:
 [Comparing Debian vs Alpine for container & Docker apps](https://www.turnkeylinux.org/blog/alpine-vs-debian)
 
 # What version of OpenSSH do I get?
