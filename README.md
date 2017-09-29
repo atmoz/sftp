@@ -45,7 +45,7 @@ User "foo" with password "pass" can login with sftp and upload files to a folder
 
 ## Sharing a directory from your computer
 
-Let's mount a directory and set UID (we will also provide our own hostkeys):
+Let's mount a directory and set UID:
 
 ```
 docker run \
@@ -68,9 +68,7 @@ sftp:
 
 ### Logging in
 
-The OpenSSH server runs by default on port 22, and in this example, we are
-forwarding the container's port 22 to the host's port 2222. To log in with the
-OpenSSH client, run: `sftp -P 2222 foo@<host-ip>`
+The OpenSSH server runs by default on port 22, and in this example, we are forwarding the container's port 22 to the host's port 2222. To log in with the OpenSSH client, run: `sftp -P 2222 foo@<host-ip>`
 
 ## Store users in config
 
@@ -105,11 +103,7 @@ Tip: you can use [atmoz/makepasswd](https://hub.docker.com/r/atmoz/makepasswd/) 
 
 ## Logging in with SSH keys
 
-Mount public keys in the user's `.ssh/keys/` directory. All keys are
-automatically appended to `.ssh/authorized_keys` (you can't mount this file
-directly, because OpenSSH requires limited file permissions). In this example,
-we do not provide any password, so the user `foo` can only login with his SSH
-key.
+Mount public keys in the user's `.ssh/keys/` directory. All keys are automatically appended to `.ssh/authorized_keys` (you can't mount this file directly, because OpenSSH requires limited file permissions). In this example, we do not provide any password, so the user `foo` can only login with his SSH key.
 
 ```
 docker run \
@@ -122,9 +116,7 @@ docker run \
 
 ## Providing your own SSH host key (recommended)
 
-This container will generate new SSH host keys at first run. To avoid that your
-users get a MITM warning when you recreate your container (and the host keys
-changes), you can mount your own host keys.
+This container will generate new SSH host keys at first run. To avoid that your users get a MITM warning when you recreate your container (and the host keys changes), you can mount your own host keys.
 
 ```
 docker run \
@@ -149,9 +141,7 @@ See next section for an example.
 
 ## Bindmount dirs from another location
 
-If you are using `--volumes-from` or just want to make a custom directory
-available in user's home directory, you can add a script to `/etc/sftp.d/` that
-bindmounts after container starts.
+If you are using `--volumes-from` or just want to make a custom directory available in user's home directory, you can add a script to `/etc/sftp.d/` that bindmounts after container starts.
 
 ```
 #!/bin/bash
@@ -176,29 +166,13 @@ bindmount /data/docs /home/peter/docs --read-only
 
 # What's the difference between Debian and Alpine?
 
-The biggest differences are in size and OpenSSH version.
-[Alpine](https://hub.docker.com/_/alpine/) is 10 times smaller than
-[Debian](https://hub.docker.com/_/debian/). OpenSSH version can also differ, as
-it's two different teams maintaining the packages. Debian is generally
-considered more stable and only bugfixes and security fixes are added after
-each Debian release (about 2 years). Alpine has a faster release cycle (about 6
-months) and therefore newer versions of OpenSSH. As I'm writing this, Debian
-has version 7.4 while Alpine has version 7.5. Recommended reading:
-[Comparing Debian vs Alpine for container & Docker apps](https://www.turnkeylinux.org/blog/alpine-vs-debian)
+The biggest differences are in size and OpenSSH version. [Alpine](https://hub.docker.com/_/alpine/) is 10 times smaller than [Debian](https://hub.docker.com/_/debian/). OpenSSH version can also differ, as it's two different teams maintaining the packages. Debian is generally considered more stable and only bugfixes and security fixes are added after each Debian release (about 2 years). Alpine has a faster release cycle (about 6 months) and therefore newer versions of OpenSSH. As I'm writing this, Debian has version 7.4 while Alpine has version 7.5. Recommended reading: [Comparing Debian vs Alpine for container & Docker apps](https://www.turnkeylinux.org/blog/alpine-vs-debian)
 
 # What version of OpenSSH do I get?
 
-It depends on which linux distro and version you choose (see available images
-at the top). You can see what version you get by checking the distro's packages
-online. I have provided direct links below for easy access.
+It depends on which linux distro and version you choose (see available images at the top). You can see what version you get by checking the distro's packages online. I have provided direct links below for easy access.
 
 - [List of `openssh` packages on Alpine releases](https://pkgs.alpinelinux.org/packages?name=openssh&branch=&repo=main&arch=x86_64)
 - [List of `openssh-server` packages on Debian releases](https://packages.debian.org/search?keywords=openssh-server&searchon=names&exact=1&suite=all&section=main)
 
-**Note:** The time when this image was last built can delay the availability of
-an OpenSSH release. Since this is an automated build linked with
-[debian](https://hub.docker.com/_/debian/) and
-[alpine](https://hub.docker.com/_/alpine/) repos, the build will depend on how
-often they push changes (out of my control).  Typically this can take 1-5 days,
-but it can also take longer. You can of course make this more predictable by
-cloning this repo and run your own build manually.
+**Note:** The time when this image was last built can delay the availability of an OpenSSH release. Since this is an automated build linked with [debian](https://hub.docker.com/_/debian/) and [alpine](https://hub.docker.com/_/alpine/) repos, the build will depend on how often they push changes (out of my control).  Typically this can take 1-5 days, but it can also take longer. You can of course make this more predictable by cloning this repo and run your own build manually.
