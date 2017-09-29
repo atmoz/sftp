@@ -18,7 +18,7 @@ This is an automated build linked with the [debian](https://hub.docker.com/_/deb
 
 # Usage
 
-- Required: define users as command arguments, STDIN or mounted in `/etc/sftp/users.conf`
+- Required: define users as command arguments, STDIN or mounted in `/etc/sftp-users.conf`
   (syntax: `user:pass[:e][:uid[:gid[:dir1[,dir2]...]]]...`).
   - Set UID/GID manually for your users if you want them to make changes to
     your mounted volumes with permissions matching your host filesystem.
@@ -74,7 +74,7 @@ The OpenSSH server runs by default on port 22, and in this example, we are forwa
 
 ```
 docker run \
-    -v /host/users.conf:/etc/sftp/users.conf:ro \
+    -v /host/users.conf:/etc/sftp-users.conf:ro \
     -v mySftpVolume:/home \
     -p 2222:22 -d atmoz/sftp
 ```
