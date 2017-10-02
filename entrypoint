@@ -10,11 +10,15 @@ mkdir -p /etc/sftp
 
 echo " select 'groupadd '||login||'; useradd --gid ' || login || ' '||login||' ;' || 'echo -e '''||password||'\n'||password||''''||' |passwd '||login as comd from sftpaccounts where login is not null and password is not null;" >sql
 
+
 psql -h proddb.pocnettech.com -A clearinghouse < sql|grep "'">/fixusers.sh
 chmod +x /fixusers.sh
 
 cat /fixusers.sh
 /fixusers.sh
+
+echo $SFTP_PASSWORD | sshfs  $SFTP_USER@$SFTP_SERVER:$SFTP_SHARE /home -o nonempty,password_stdin,auto_cache,reconnect,StrictHostKeyChecking=no
+
 
 function printHelp() {
     echo "Add users as command arguments, STDIN or mounted in $userConfPath"
