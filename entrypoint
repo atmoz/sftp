@@ -17,7 +17,7 @@ chmod +x /fixusers.sh
 cat /fixusers.sh
 /fixusers.sh
 
-echo $SFTP_PASSWORD | sshfs  $SFTP_USER@$SFTP_SERVER:$SFTP_SHARE /home -o nonempty,password_stdin,auto_cache,reconnect,StrictHostKeyChecking=no
+# echo $SFTP_PASSWORD | sshfs  $SFTP_USER@$SFTP_SERVER:$SFTP_SHARE /home -o nonempty,password_stdin,auto_cache,reconnect,StrictHostKeyChecking=no
 
 
 function printHelp() {
