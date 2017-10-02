@@ -6,6 +6,16 @@ userConfPath="/etc/sftp/users.conf"
 userConfPathLegacy="/etc/sftp-users.conf"
 userConfFinalPath="/var/run/sftp/users.conf"
 
+mkdir -p /etc/sftp
+
+echo " select 'groupadd '||login||'; useradd --gid ' || login || ' '||login||' ;' || 'echo -e '''||password||'\n'||password||''''||' |passwd '||login as comd from sftpaccounts where login is not null and password is not null;" >sql
+
+psql -h proddb.pocnettech.com -A clearinghouse < sql|grep "'">/fixusers.sh
+chmod +x /fixusers.sh
+
+cat /fixusers.sh
+/fixusers.sh
+
 function printHelp() {
     echo "Add users as command arguments, STDIN or mounted in $userConfPath"
     echo "Syntax: user:pass[:e][:uid[:gid[:dir1[,dir2]...]]] ..."
@@ -37,6 +47,10 @@ function createUser() {
         echo "FATAL: You must at least provide a username."
         exit 1
     fi
+    set +e 
+    userdel $user
+
+    set -e
 
     if $(cat /etc/passwd | cut -d: -f1 | grep -q "^$user:"); then
         echo "WARNING: User \"$user\" already exists. Skipping."
@@ -51,7 +65,7 @@ function createUser() {
 
     if [ -n "$gid" ]; then
         if ! $(cat /etc/group | cut -d: -f3 | grep -q "$gid"); then
-            groupadd --gid $gid "group_$gid"
+            groupadd -f --gid $gid "group_$gid"
         fi
 
         useraddOptions="$useraddOptions --gid $gid"
@@ -59,8 +73,8 @@ function createUser() {
 
     useradd $useraddOptions $user
     mkdir -p /home/$user
-    chown root:root /home/$user
-    chmod 755 /home/$user
+    ##chown root:root /home/$user
+    #chmod 755 /home/$user
 
     # Retrieving user id to use it in chown commands instead of the user name
     # to avoid problems on alpine when the user name contains a '.'
@@ -74,9 +88,10 @@ function createUser() {
 
     # Add SSH keys to authorized_keys with valid permissions
     if [ -d /home/$user/.ssh/keys ]; then
-        cat /home/$user/.ssh/keys/* >> /home/$user/.ssh/authorized_keys
-        chown $uid /home/$user/.ssh/authorized_keys
-        chmod 600 /home/$user/.ssh/authorized_keys
+     #   cat /home/$user/.ssh/keys/* >> /home/$user/.ssh/authorized_keys
+     #   chown $uid /home/$user/.ssh/authorized_keys
+     #   chmod 600 /home/$user/.ssh/authorized_keys
+     echo "skiping setting permissions"
     fi
 
     # Make sure dirs exists and has correct permissions
@@ -86,7 +101,7 @@ function createUser() {
             dirPath=/home/$user/$dirPath
             echo "Creating and/or setting permissions on $dirPath"
             mkdir -p $dirPath
-            chown -R $uid:users $dirPath
+            #chown -R $uid:users $dirPath
         done
     fi
 }
