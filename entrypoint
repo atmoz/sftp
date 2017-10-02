@@ -168,6 +168,20 @@ if [ ! -f "$userConfFinalPath" ]; then
     fi
 fi
 
+if [ -z ${HOST_SSH_RSA_KEY+x} ]; then
+    echo $HOST_SSH_RSA_KEY> /etc/ssh/ssh_host_rsa_key
+    chmod u+rw,o-rwx,g-rwx  /etc/ssh/ssh_host_rsa_key
+    echo $HOST_SSH_RSA_KEY_PUB> /etc/ssh/ssh_host_rsa_key.pub    
+    chmod u+rw,o-wx,o+r,g-wx,g+r  /etc/ssh/ssh_host_rsa_key.pub
+fi
+if [ -z ${HOST_SSH_ED25519_KEY+x} ]; then
+    echo $HOST_SSH_ED25519_KEY> /etc/ssh/ssh_host_ed25519_key
+    chmod u+rw,o-rwx,g-rwx /etc/ssh/ssh_host_ed25519_key
+    echo $HOST_SSH_ED25519_KEY_PUB> /etc/ssh/ssh_host_ed25519_key.pub      
+    chmod u+rw,o-wx,o+r,g-wx,g+r /etc/ssh/ssh_host_ed25519_key.pub
+fi
+
+
 # Source custom scripts, if any
 if [ -d /etc/sftp.d ]; then
     for f in /etc/sftp.d/*; do
