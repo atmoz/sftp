@@ -14,8 +14,9 @@ COPY sshd_config /etc/ssh/sshd_config
 COPY entrypoint /
 COPY README.md /
 
-RUN echo "*/5 * * * * /entrypoint;echo done >> /var/log/ups" >tmpfile \
-    && chmod +x /entrypoint
+RUN echo "*/5 * * * * /entrypoint;echo done >> /var/log/ups" >/tmpfile \
+    && chmod +x /entrypoint \
+    && crontab -i /tmpfile
 
 EXPOSE 22
 
