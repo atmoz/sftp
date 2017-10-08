@@ -91,14 +91,18 @@ function createUser() {
         chmod 600 /home/$user/.ssh/authorized_keys
     fi
 
-    # Make sure dirs exists and has correct permissions
+    # Make sure dirs exists
     if [ -n "$dir" ]; then
-        IFS=',' read -a dirParam <<< $dir
-        for dirPath in ${dirParam[@]}; do
-            dirPath=/home/$user/$dirPath
-            echo "Creating and/or setting permissions on $dirPath"
-            mkdir -p $dirPath
-            chown -R $uid:users $dirPath
+        IFS=',' read -a dirArgs <<< $dir
+        for dirPath in ${dirArgs[@]}; do
+            dirPath="/home/$user/$dirPath"
+            if [ ! -d "$dirPath" ]; then
+                log "Creating directory: $dirPath"
+                mkdir -p $dirPath
+                chown -R $uid:users $dirPath
+            else
+                log "Directory already exists: $dirPath"
+            fi
         done
     fi
 }
