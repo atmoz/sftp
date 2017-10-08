@@ -169,6 +169,7 @@ function testDir() {
     assertReturn $? 0
 }
 
+# Smallest user config possible
 function testMinimalContainerStart() {
     $skipAllTests && skip && return 0
 
@@ -177,7 +178,7 @@ function testMinimalContainerStart() {
     $sudo docker run \
         --name "$tmpContainerName" \
         -d "$sftpImageName" \
-        minimal \
+        m: \
         > "$redirect"
 
     waitForServer $tmpContainerName

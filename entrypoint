@@ -1,45 +1,57 @@
 #!/bin/bash
 set -e
-export DEBIAN_FRONTEND=noninteractive
 
+# Paths
 userConfPath="/etc/sftp/users.conf"
 userConfPathLegacy="/etc/sftp-users.conf"
 userConfFinalPath="/var/run/sftp/users.conf"
 
-function printHelp() {
-    echo "Add users as command arguments, STDIN or mounted in $userConfPath"
-    echo "Syntax: user:pass[:e][:uid[:gid[:dir1[,dir2]...]]] ..."
-    echo "Use --readme for more information and examples."
+# Extended regular expression (ERE) for arguments
+reUser='[a-z_][a-z0-9._-]{0,31}'
+rePass='[^:]{0,255}'
+reUid='[[:digit:]]*'
+reGid='[[:digit:]]*'
+reDir='[^:]*'
+reArgs="^($reUser)(:$rePass)(:e)?(:$reUid)?(:$reGid)?(:$reDir)?$"
+reArgsMaybe="^[^:[:space:]]+:.*$" # Smallest indication of attempt to use argument
+
+function log() {
+    echo "[entrypoint] $@"
 }
 
-function printReadme() {
-    cat /README.md
-    echo "TIP: Read this in HTML format here: https://github.com/atmoz/sftp"
+function validateArg() {
+    name="$1"
+    val="$2"
+    re="$3"
+
+    if [[ "$val" =~ ^$re$ ]]; then
+        return 0
+    else
+        log "ERROR: Invalid $name \"$val\", do not match required regex pattern: $re"
+        return 1
+    fi
 }
 
 function createUser() {
-    IFS=':' read -a param <<< $@
-    user="${param[0]}"
-    pass="${param[1]}"
+    log "Parsing user data: \"$@\""
 
-    if [ "${param[2]}" == "e" ]; then
+    IFS=':' read -a args <<< $@
+    index=0
+
+    user="${args[0]}"; validateArg "username" "$user" "$reUser" || return 1
+    pass="${args[1]}"; validateArg "password" "$pass" "$rePass" || return 1
+
+    if [ "${args[2]}" == "e" ]; then
         chpasswdOptions="-e"
-        uid="${param[3]}"
-        gid="${param[4]}"
-        dir="${param[5]}"
-    else
-        uid="${param[2]}"
-        gid="${param[3]}"
-        dir="${param[4]}"
+        index=1
     fi
 
-    if [ -z "$user" ]; then
-        echo "FATAL: You must at least provide a username."
-        exit 1
-    fi
+    uid="${args[$[$index+2]]}"; validateArg "UID" "$uid" "$reUid" || return 1
+    gid="${args[$[$index+3]]}"; validateArg "GID" "$gid" "$reGid" || return 1
+    dir="${args[$[$index+4]]}"; validateArg "dirs" "$dir" "$reDir" || return 1
 
     if $(cat /etc/passwd | cut -d: -f1 | grep -q "^$user:"); then
-        echo "WARNING: User \"$user\" already exists. Skipping."
+        log "WARNING: User \"$user\" already exists. Skipping."
         return 0
     fi
 
@@ -91,14 +103,11 @@ function createUser() {
     fi
 }
 
-if [[ $1 =~ ^--help$|^-h$ ]]; then
-    printHelp
-    exit 0
-fi
-
-if [ "$1" == "--readme" ]; then
-    printReadme
-    exit 0
+# Allow running other programs, e.g. bash
+if [[ -z "$1" || "$1" =~ $reArgsMaybe ]]; then
+    startSshd=true
+else
+    startSshd=false
 fi
 
 # Backward compatibility with legacy config path
@@ -116,29 +125,32 @@ if [ ! -f "$userConfFinalPath" ]; then
         cat "$userConfPath" | grep -v -e '^$' > "$userConfFinalPath"
     fi
 
-    # Append users from arguments to final config
-    for user in "$@"; do
-        echo "$user" >> "$userConfFinalPath"
-    done
-
     # Append users from STDIN to final config
+    # DEPRECATED on 2017-10-08, DO NOT USE
+    # TODO: Remove code after 6-12 months
     if [ ! -t 0 ]; then
         while IFS= read -r user || [[ -n "$user" ]]; do
             echo "$user" >> "$userConfFinalPath"
         done
     fi
 
-    # Check that we have users in config
-    if [ "$(cat "$userConfFinalPath" | wc -l)" == 0 ]; then
-        echo "FATAL: No users provided!"
-        printHelp
-        exit 3
+    if $startSshd; then
+        # Append users from arguments to final config
+        for user in "$@"; do
+            echo "$user" >> "$userConfFinalPath"
+        done
     fi
 
-    # Import users from final conf file
-    while IFS= read -r user || [[ -n "$user" ]]; do
-        createUser "$user"
-    done < "$userConfFinalPath"
+    # Check that we have users in config
+    if [[ -f "$userConfFinalPath" && "$(cat "$userConfFinalPath" | wc -l)" > 0 ]]; then
+        # Import users from final conf file
+        while IFS= read -r user || [[ -n "$user" ]]; do
+            createUser "$user"
+        done < "$userConfFinalPath"
+    elif $startSshd; then
+        log "FATAL: No users provided!"
+        exit 3
+    fi
 
     # Generate unique ssh keys for this container, if needed
     if [ ! -f /etc/ssh/ssh_host_ed25519_key ]; then
@@ -153,11 +165,17 @@ fi
 if [ -d /etc/sftp.d ]; then
     for f in /etc/sftp.d/*; do
         if [ -x "$f" ]; then
-            echo "Running $f ..."
+            log "Running $f ..."
             $f
         fi
     done
     unset f
 fi
 
-exec /usr/sbin/sshd -D -e
+if $startSshd; then
+    log "Executing sshd"
+    exec /usr/sbin/sshd -D -e
+else
+    log "Executing $@"
+    exec "$@"
+fi
