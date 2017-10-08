@@ -44,6 +44,10 @@ function beforeTest() {
     mkdir "$tmpDir"
 
     echo "test::$(id -u):$(id -g):dir1,dir2" >> "$tmpDir/users"
+    echo "" >> "$tmpDir/users" # empty line
+    echo "# comments are allowed" >> "$tmpDir/users"
+    echo "  " >> "$tmpDir/users" # only whitespace
+    echo "  # with whitespace in front" >> "$tmpDir/users"
     echo "user.with.dot::$(id -u):$(id -g)" >> "$tmpDir/users"
     $sudo docker run \
         -v "$tmpDir/users:/etc/sftp/users.conf:ro" \

@@ -14,6 +14,7 @@ reGid='[[:digit:]]*'
 reDir='[^:]*'
 reArgs="^($reUser)(:$rePass)(:e)?(:$reUid)?(:$reGid)?(:$reDir)?$"
 reArgsMaybe="^[^:[:space:]]+:.*$" # Smallest indication of attempt to use argument
+reArgSkip='^([[:blank:]]*#.*|[[:blank:]]*)$' # comment or empty line
 
 function log() {
     echo "[entrypoint] $@"
@@ -126,7 +127,7 @@ if [ ! -f "$userConfFinalPath" ]; then
 
     # Append mounted config to final config
     if [ -f "$userConfPath" ]; then
-        cat "$userConfPath" | grep -v -e '^$' > "$userConfFinalPath"
+        cat "$userConfPath" | grep -v -E "$reArgSkip" > "$userConfFinalPath"
     fi
 
     # Append users from STDIN to final config
