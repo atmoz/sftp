@@ -1,6 +1,7 @@
 FROM alpine:3.6
 MAINTAINER Adrian Dvergsdal [atmoz.net]
 
+# Steps done in one RUN layer:
 # - Install packages
 # - Fix default group (1000 does not exist)
 # - OpenSSH needs /var/run/sshd to run
@@ -13,7 +14,6 @@ RUN echo "@community http://dl-cdn.alpinelinux.org/alpine/edge/community" >> /et
 
 COPY sshd_config /etc/ssh/sshd_config
 COPY entrypoint /
-COPY README.md /
 
 EXPOSE 22
 
