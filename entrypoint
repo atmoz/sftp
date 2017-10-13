@@ -77,7 +77,7 @@ function createUser() {
 
     # Retrieving user id to use it in chown commands instead of the user name
     # to avoid problems on alpine when the user name contains a '.'
-    uid=`id $user -u`
+    uid="$(id -u $user)"
 
     if [ -n "$pass" ]; then
         echo "$user:$pass" | chpasswd $chpasswdOptions
