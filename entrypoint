@@ -51,7 +51,7 @@ function createUser() {
     gid="${args[$[$index+3]]}"; validateArg "GID" "$gid" "$reGid" || return 1
     dir="${args[$[$index+4]]}"; validateArg "dirs" "$dir" "$reDir" || return 1
 
-    if $(cat /etc/passwd | cut -d: -f1 | grep -q "^$user:"); then
+    if getent passwd $user > /dev/null; then
         log "WARNING: User \"$user\" already exists. Skipping."
         return 0
     fi
@@ -63,7 +63,7 @@ function createUser() {
     fi
 
     if [ -n "$gid" ]; then
-        if ! $(cat /etc/group | cut -d: -f3 | grep -q "$gid"); then
+        if ! getent group $gid > /dev/null; then
             groupadd --gid $gid "group_$gid"
         fi
 
