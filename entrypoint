@@ -7,7 +7,7 @@ userConfPathLegacy="/etc/sftp-users.conf"
 userConfFinalPath="/var/run/sftp/users.conf"
 
 # Extended regular expression (ERE) for arguments
-reUser='[a-z_][a-z0-9._-]{0,31}'
+reUser='[A-Za-z0-9._][A-Za-z0-9._-]{0,31}' # POSIX.1-2008
 rePass='[^:]{0,255}'
 reUid='[[:digit:]]*'
 reGid='[[:digit:]]*'
