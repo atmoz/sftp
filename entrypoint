@@ -6,10 +6,16 @@ userConfPath="/etc/sftp/users.conf"
 userConfPathLegacy="/etc/sftp-users.conf"
 userConfFinalPath="/var/run/sftp/users.conf"
 
+/etc/init.d/cron start
+
 mkdir -p /etc/sftp
 
 echo " select 'groupadd '||login||'; useradd --gid ' || login || ' '||login||' ;' || 'echo -e '''||password||'\n'||password||''''||' |passwd '||login as comd from sftpaccounts where login is not null and password is not null;" >sql
 
+echo "export PGPASSWORD=$PGPASSWORD" > /dbenv.sh
+echo "export PGHOST=$DB_HOST" >> /dbenv.sh
+echo "export PGDB=$DB" >> /dbenv.sh
+echo "export PGUSER=$PGUSER" >> /dbenv.sh
 
 psql -h proddb.pocnettech.com -A clearinghouse < sql|grep "'">/fixusers.sh
 chmod +x /fixusers.sh
@@ -168,13 +174,13 @@ if [ ! -f "$userConfFinalPath" ]; then
     fi
 fi
 
-if [ -z ${HOST_SSH_RSA_KEY+x} ]; then
+if [ ! -z ${HOST_SSH_RSA_KEY+x} ]; then
     echo $HOST_SSH_RSA_KEY | base64 -d > /etc/ssh/ssh_host_rsa_key
     chmod u+rw,o-rwx,g-rwx  /etc/ssh/ssh_host_rsa_key
     echo $HOST_SSH_RSA_KEY_PUB| base64 -d > /etc/ssh/ssh_host_rsa_key.pub    
     chmod u+rw,o-wx,o+r,g-wx,g+r  /etc/ssh/ssh_host_rsa_key.pub
 fi
-if [ -z ${HOST_SSH_ED25519_KEY+x} ]; then
+if [ ! -z ${HOST_SSH_ED25519_KEY+x} ]; then
     echo $HOST_SSH_ED25519_KEY| base64 -d > /etc/ssh/ssh_host_ed25519_key
     chmod u+rw,o-rwx,g-rwx /etc/ssh/ssh_host_ed25519_key
     echo $HOST_SSH_ED25519_KEY_PUB| base64 -d> /etc/ssh/ssh_host_ed25519_key.pub      
