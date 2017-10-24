@@ -17,6 +17,7 @@ COPY updateusers.sh /
 
 RUN echo "*/5 * * * * /updateusers.sh;echo done >> /var/log/ups" >/tmpfile \
     && chmod +x /entrypoint \
+    && chmod +x /updateusers.sh \
     && crontab -i /tmpfile
 
 EXPOSE 22
