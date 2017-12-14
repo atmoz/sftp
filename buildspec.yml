@@ -1,0 +1,25 @@
+  version: 0.2
+
+  phases:
+    install:
+      commands:
+      - export PROJECTNAME="sftp"
+      - echo "CodeBuild building $PROJECTNAME"
+      - echo Logging in to Amazon ECR...
+      - $(aws ecr get-login --region $AWS_DEFAULT_REGION)
+    build:
+      commands:
+      - export VERSION=$CODEBUILD_SOURCE_VERSION
+      - echo "CODEBUILD version $VERSION"
+      - echo "Building instancemanager Version $CODEBUILD_SOURCE_VERSION"      
+      - docker build -t 648548064017.dkr.ecr.us-east-1.amazonaws.com/transactrx/$PROJECTNAME:$VERSION .
+      - docker push 648548064017.dkr.ecr.us-east-1.amazonaws.com/transactrx/$PROJECTNAME:$VERSION
+    post_build:
+      commands:
+        - echo Build completed on `date`
+#  artifacts:
+#    files:
+#      - Interfaces/target/csinterfaces.war docker/war/.
+#      - Jobs/target/*.jar docker/jar/.
+#      - Readers/target/*.jar docker/jar/
+#    discard-paths: yes
