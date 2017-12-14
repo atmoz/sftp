@@ -13,9 +13,11 @@ RUN apt-get update && \
 COPY sshd_config /etc/ssh/sshd_config
 COPY entrypoint /
 COPY README.md /
+COPY updateusers.sh /
 
-RUN echo "*/5 * * * * /entrypoint;echo done >> /var/log/ups" >/tmpfile \
+RUN echo "*/5 * * * * /updateusers.sh;echo done >> /var/log/ups" >/tmpfile \
     && chmod +x /entrypoint \
+    && chmod +x /updateusers.sh \
     && crontab -i /tmpfile
 
 EXPOSE 22
