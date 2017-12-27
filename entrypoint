@@ -45,6 +45,8 @@ function createUser() {
     if [ "${args[2]}" == "e" ]; then
         chpasswdOptions="-e"
         index=1
+    else
+        chpasswdOptions=""
     fi
 
     uid="${args[$[$index+2]]}"; validateArg "UID" "$uid" "$reUid" || return 1
