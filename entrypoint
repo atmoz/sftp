@@ -131,18 +131,17 @@ if [ ! -f "$userConfFinalPath" ]; then
         cat "$userConfPath" | grep -v -E "$reArgSkip" > "$userConfFinalPath"
     fi
 
-    # Append users from STDIN to final config
-    # DEPRECATED on 2017-10-08, DO NOT USE
-    # TODO: Remove code after 6-12 months
-    if [ ! -t 0 ]; then
-        while IFS= read -r user || [[ -n "$user" ]]; do
+    if $startSshd; then
+        # Append users from arguments to final config
+        for user in "$@"; do
             echo "$user" >> "$userConfFinalPath"
         done
     fi
 
-    if $startSshd; then
-        # Append users from arguments to final config
-        for user in "$@"; do
+    if [ -n "$SFTP_USERS" ]; then
+        # Append users from environment variable to final config
+        usersFromEnv=($SFTP_USERS) # as array
+        for user in "${usersFromEnv[@]}"; do
             echo "$user" >> "$userConfFinalPath"
         done
     fi
