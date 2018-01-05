@@ -172,6 +172,8 @@ if [ -d /etc/sftp.d ]; then
         if [ -x "$f" ]; then
             log "Running $f ..."
             $f
+        else
+            log "Could not run $f, because it's missing execute permission (+x)."
         fi
     done
     unset f
