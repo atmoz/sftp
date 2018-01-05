@@ -172,8 +172,8 @@ if [ -d /etc/sftp.d ]; then
         if [ -x "$f" ]; then
             log "Running $f ..."
             $f
-        elif
-            log "Will not run $f because the file is not executable. Maybe you should run chmod +x $f outside your container."
+        else
+            log "Could not run $f, because it's missing execute permission (+x)."
         fi
     done
     unset f
