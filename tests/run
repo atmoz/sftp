@@ -52,10 +52,12 @@ function beforeTest() {
     $sudo docker run \
         -v "$tmpDir/users:/etc/sftp/users.conf:ro" \
         -v "$scriptDir/id_rsa.pub":/home/test/.ssh/keys/id_rsa.pub:ro \
+        -v "$scriptDir/id_rsa.pub":/home/user-from-env/.ssh/keys/id_rsa.pub:ro \
         -v "$scriptDir/id_rsa.pub":/home/user.with.dot/.ssh/keys/id_rsa.pub:ro \
         -v "$tmpDir":/home/test/share \
         --name "$sftpContainerName" \
         --expose 22 \
+        -e "SFTP_USERS=user-from-env::$(id -u):$(id -g) user-from-env-2::$(id -u):$(id -g)" \
         -d "$sftpImageName" \
         > "$redirect"
 
@@ -142,6 +144,13 @@ function testUserWithDotLogin() {
     $skipAllTests && skip && return 0
 
     runSftpCommands "$sftpContainerName" "user.with.dot" "exit"
+    assertReturn $? 0
+}
+
+function testLoginUsingUserFromEnv() {
+    $skipAllTests && skip && return 0
+
+    runSftpCommands "$sftpContainerName" "user-from-env" "exit"
     assertReturn $? 0
 }
 

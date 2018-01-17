@@ -37,26 +37,27 @@ function createUser() {
     log "Parsing user data: \"$@\""
 
     IFS=':' read -a args <<< $@
-    index=0
+
+    skipIndex=0
+    chpasswdOptions=""
+    useraddOptions="--no-user-group"
 
     user="${args[0]}"; validateArg "username" "$user" "$reUser" || return 1
     pass="${args[1]}"; validateArg "password" "$pass" "$rePass" || return 1
 
     if [ "${args[2]}" == "e" ]; then
         chpasswdOptions="-e"
-        index=1
+        skipIndex=1
     fi
 
-    uid="${args[$[$index+2]]}"; validateArg "UID" "$uid" "$reUid" || return 1
-    gid="${args[$[$index+3]]}"; validateArg "GID" "$gid" "$reGid" || return 1
-    dir="${args[$[$index+4]]}"; validateArg "dirs" "$dir" "$reDir" || return 1
+    uid="${args[$[$skipIndex+2]]}"; validateArg "UID" "$uid" "$reUid" || return 1
+    gid="${args[$[$skipIndex+3]]}"; validateArg "GID" "$gid" "$reGid" || return 1
+    dir="${args[$[$skipIndex+4]]}"; validateArg "dirs" "$dir" "$reDir" || return 1
 
     if getent passwd $user > /dev/null; then
         log "WARNING: User \"$user\" already exists. Skipping."
         return 0
     fi
-
-    useraddOptions="--no-user-group"
 
     if [ -n "$uid" ]; then
         useraddOptions="$useraddOptions --non-unique --uid $uid"
@@ -130,18 +131,17 @@ if [ ! -f "$userConfFinalPath" ]; then
         cat "$userConfPath" | grep -v -E "$reArgSkip" > "$userConfFinalPath"
     fi
 
-    # Append users from STDIN to final config
-    # DEPRECATED on 2017-10-08, DO NOT USE
-    # TODO: Remove code after 6-12 months
-    if [ ! -t 0 ]; then
-        while IFS= read -r user || [[ -n "$user" ]]; do
+    if $startSshd; then
+        # Append users from arguments to final config
+        for user in "$@"; do
             echo "$user" >> "$userConfFinalPath"
         done
     fi
 
-    if $startSshd; then
-        # Append users from arguments to final config
-        for user in "$@"; do
+    if [ -n "$SFTP_USERS" ]; then
+        # Append users from environment variable to final config
+        usersFromEnv=($SFTP_USERS) # as array
+        for user in "${usersFromEnv[@]}"; do
             echo "$user" >> "$userConfFinalPath"
         done
     fi
@@ -172,6 +172,8 @@ if [ -d /etc/sftp.d ]; then
         if [ -x "$f" ]; then
             log "Running $f ..."
             $f
+        else
+            log "Could not run $f, because it's missing execute permission (+x)."
         fi
     done
     unset f
