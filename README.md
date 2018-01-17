@@ -18,13 +18,14 @@ This is an automated build linked with the [debian](https://hub.docker.com/_/deb
 
 # Usage
 
-- Required: define users in command arguments or in file mounted as `/etc/sftp/users.conf`
-  (syntax: `user:pass[:e][:uid[:gid[:dir1[,dir2]...]]]...`).
+- Define users in (1) command arguments, (2) `SFTP_USERS` environment variable
+  or (3) in file mounted as `/etc/sftp/users.conf` (syntax:
+  `user:pass[:e][:uid[:gid[:dir1[,dir2]...]]] ...`, see below for examples)
   - Set UID/GID manually for your users if you want them to make changes to
     your mounted volumes with permissions matching your host filesystem.
-  - Add directory names at the end, if you want to create them under the user's
-    home directory. Perfect when you just want a fast way to upload something.
-- Optional (but recommended): mount volumes.
+  - Directory names at the end will be created under user's home directory with
+    write permission, if they aren't already present.
+- Mount volumes
   - The users are chrooted to their home directory, so you can mount the
     volumes in separate directories inside the user's home directory
     (/home/user/**mounted-directory**) or just mount the whole **/home** directory.
