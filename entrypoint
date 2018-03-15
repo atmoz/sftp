@@ -88,6 +88,17 @@ function createUser() {
     fi
 }
 
+function startWatch() {
+
+	if [ -n "$WATCH" ]; then
+		/watch.sh \
+			--owner "$WATCH_OWNER" \
+			--group "$WATCH_GROUP" \
+			--permission "$WATCH_PERMISSION" \
+			"$WATCH_TARGET" &
+	fi
+}
+
 if [[ $1 =~ ^--help$|^-h$ ]]; then
     printHelp
     exit 0
@@ -150,4 +161,5 @@ if [ -d /etc/sftp.d ]; then
     unset f
 fi
 
+startWatch
 exec /usr/sbin/sshd -D -e
