@@ -1,0 +1,11 @@
+version: '3'
+services:
+  sftp:
+    build: .
+    volumes:
+      - /mnt/volume/config/users.conf:/etc/sftp/users.conf:ro
+      - /mnt/volume/config/ssh_host_ed25519_key:/etc/ssh/ssh_host_ed25519_key
+      - /mnt/volume/config/ssh_host_rsa_key:/etc/ssh/ssh_host_rsa_key
+      - /mnt/volume/home:/home
+    ports:
+      - "22:22"
