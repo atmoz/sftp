@@ -34,7 +34,9 @@ function validateArg() {
 }
 
 function createUser() {
-    log "Parsing user data: \"$@\""
+    if [[ ! -z "$HIDE_SENSITIVE_DATA" ]]; then
+        log "Parsing user data: \"$@\""
+    fi
 
     IFS=':' read -a args <<< $@
 
