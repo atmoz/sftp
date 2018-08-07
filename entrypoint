@@ -181,10 +181,10 @@ if [ -d /etc/sftp.d ]; then
     unset f
 fi
 
-if $startSshd; then
-    log "Executing sshd"
-    exec /usr/sbin/sshd -D -e
-else
-    log "Executing $@"
-    exec "$@"
-fi
+#if $startSshd; then
+#    log "Executing sshd"
+#    exec /usr/sbin/sshd -D -e
+#else
+#    log "Executing $@"
+#    exec "$@"
+#fi
