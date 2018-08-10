@@ -55,26 +55,25 @@ function createUser() {
     dir="${args[$[$skipIndex+4]]}"; validateArg "dirs" "$dir" "$reDir" || return 1
 
     if getent passwd $user > /dev/null; then
-        log "WARNING: User \"$user\" already exists. Skipping."
-        return 0
+        log "WARNING: User \"$user\" already exists. Skipping creation."
+    else
+	if [ -n "$uid" ]; then
+	    useraddOptions="$useraddOptions --non-unique --uid $uid"
+	fi
+
+	if [ -n "$gid" ]; then
+	    if ! getent group $gid > /dev/null; then
+	        groupadd --gid $gid "group_$gid"
+            fi
+
+	    useraddOptions="$useraddOptions --gid $gid"
+	fi
+
+	useradd $useraddOptions $user
+	mkdir -p /home/$user
+	chown root:root /home/$user
+	chmod 755 /home/$user
     fi
-
-    if [ -n "$uid" ]; then
-        useraddOptions="$useraddOptions --non-unique --uid $uid"
-    fi
-
-    if [ -n "$gid" ]; then
-        if ! getent group $gid > /dev/null; then
-            groupadd --gid $gid "group_$gid"
-        fi
-
-        useraddOptions="$useraddOptions --gid $gid"
-    fi
-
-    useradd $useraddOptions $user
-    mkdir -p /home/$user
-    chown root:root /home/$user
-    chmod 755 /home/$user
 
     # Retrieving user id to use it in chown commands instead of the user name
     # to avoid problems on alpine when the user name contains a '.'
@@ -111,19 +110,7 @@ function createUser() {
     fi
 }
 
-# Allow running other programs, e.g. bash
-if [[ -z "$1" || "$1" =~ $reArgsMaybe ]]; then
-    startSshd=true
-else
-    startSshd=false
-fi
-
-# Backward compatibility with legacy config path
-if [ ! -f "$userConfPath" -a -f "$userConfPathLegacy" ]; then
-    mkdir -p "$(dirname $userConfPath)"
-    ln -s "$userConfPathLegacy" "$userConfPath"
-fi
-
+function main() {
 # Create users only on first run
 if [ ! -f "$userConfFinalPath" ]; then
     mkdir -p "$(dirname $userConfFinalPath)"
@@ -166,6 +153,7 @@ if [ ! -f "$userConfFinalPath" ]; then
     if [ ! -f /etc/ssh/ssh_host_rsa_key ]; then
         ssh-keygen -t rsa -b 4096 -f /etc/ssh/ssh_host_rsa_key -N ''
     fi
+    rm $userConfFinalPath
 fi
 
 # Source custom scripts, if any
@@ -180,11 +168,17 @@ if [ -d /etc/sftp.d ]; then
     done
     unset f
 fi
+}
 
-#if $startSshd; then
-#    log "Executing sshd"
-#    exec /usr/sbin/sshd -D -e
-#else
-#    log "Executing $@"
-#    exec "$@"
-#fi
+# Backward compatibility with legacy config path
+if [ ! -f "$userConfPath" -a -f "$userConfPathLegacy" ]; then
+    mkdir -p "$(dirname $userConfPath)"
+    ln -s "$userConfPathLegacy" "$userConfPath"
+fi
+
+main
+inotifywait -m -e modify $userConfPath |
+while read events; do
+    main
+done
+
