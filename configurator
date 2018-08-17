@@ -17,7 +17,7 @@ reArgsMaybe="^[^:[:space:]]+:.*$" # Smallest indication of attempt to use argume
 reArgSkip='^([[:blank:]]*#.*|[[:blank:]]*)$' # comment or empty line
 
 function log() {
-    echo "[entrypoint] $@"
+    echo "[configurator] $@"
 }
 
 function validateArg() {
@@ -141,7 +141,9 @@ function main() {
 	fi
 
 	rm $userConfFinalPath
+}
 
+function runCustomScripts() {
 	# Source custom scripts, if any
 	if [ -d /etc/sftp.d ]; then
 		for f in /etc/sftp.d/*; do
@@ -174,8 +176,8 @@ function init() {
 
 init
 main
+runCustomScripts
 inotifywait -m -e modify $userConfPath |
 while read events; do
     main
 done
-
