@@ -25,6 +25,9 @@ This is an automated build linked with the [debian](https://hub.docker.com/_/deb
     your mounted volumes with permissions matching your host filesystem.
   - Directory names at the end will be created under user's home directory with
     write permission, if they aren't already present.
+  - You can define user ssh public keys via user_ssh_keys="ssh_key1;ssh_key2" 
+    delimeted by ';' instead of mapping the keys in directly. The user_ should be 
+    replaced with the username you're using.
 - Mount volumes
   - The users are chrooted to their home directory, so you can mount the
     volumes in separate directories inside the user's home directory
@@ -39,7 +42,7 @@ This is an automated build linked with the [debian](https://hub.docker.com/_/deb
 ## Simplest docker run example
 
 ```
-docker run -p 22:22 -d atmoz/sftp foo:pass:::upload
+docker run -p 22:22 -d -e foo_ssh_key="ssh-rsa ... comment" atmoz/sftp foo:pass:::upload
 ```
 
 User "foo" with password "pass" can login with sftp and upload files to a folder called "upload". No mounted directories or custom UID/GID. Later you can inspect the files and use `--volumes-from` to mount them somewhere else (or see next example).

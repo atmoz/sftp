@@ -33,6 +33,35 @@ function validateArg() {
     fi
 }
 
+# Create keys for user : createKeys user
+function createKeys() {
+    # Parse keys environment variable into key files.
+    cleanUserName="${user//[.-]/'_'}"
+    log "cleanUsername: ${cleanUserName} User: ${user}"
+    USER_SSH_KEYS="${cleanUserName}_ssh_keys" 
+    if [ -n "${!USER_SSH_KEYS}" ]; then
+        log "Create key files for ${user} from environment variable"
+        IFS=';' read -r -a USER_KEYS <<< "${!USER_SSH_KEYS}"
+        mkdir -p /home/"$user"/.ssh/keys/
+        for index in "${!USER_KEYS[@]}"
+        do
+            echo "${USER_KEYS[index]}" > /home/$user/.ssh/keys/${user}_ssh_keys_${index}.pub
+        done
+    fi
+
+    # Add SSH keys to authorized_keys with valid permissions
+    if [ -d /home/$user/.ssh/keys ]; then
+        # Reset key file so new keys can be loaded in. 
+        log "Create authorized_keys ${user} from key files"
+        echo > /home/$user/.ssh/authorized_keys
+        for publickey in /home/$user/.ssh/keys/*; do
+            cat $publickey >> /home/$user/.ssh/authorized_keys
+        done
+        chown $user /home/$user/.ssh/authorized_keys
+        chmod 600 /home/$user/.ssh/authorized_keys
+    fi
+}
+
 function createUser() {
     log "Parsing user data: \"$@\""
 
@@ -86,14 +115,7 @@ function createUser() {
         usermod -p "*" $user # disabled password
     fi
 
-    # Add SSH keys to authorized_keys with valid permissions
-    if [ -d /home/$user/.ssh/keys ]; then
-        for publickey in /home/$user/.ssh/keys/*; do
-            cat $publickey >> /home/$user/.ssh/authorized_keys
-        done
-        chown $uid /home/$user/.ssh/authorized_keys
-        chmod 600 /home/$user/.ssh/authorized_keys
-    fi
+    createKeys "${user}"
 
     # Make sure dirs exists
     if [ -n "$dir" ]; then
@@ -166,6 +188,12 @@ if [ ! -f "$userConfFinalPath" ]; then
     if [ ! -f /etc/ssh/ssh_host_rsa_key ]; then
         ssh-keygen -t rsa -b 4096 -f /etc/ssh/ssh_host_rsa_key -N ''
     fi
+else
+    # Update ssh keys for each provisioned user
+    while IFS= read -r line ; do
+        user=$(echo "${line}" | cut -d: -f1)
+        createKeys $user
+    done < "$userConfFinalPath"
 fi
 
 # Source custom scripts, if any
