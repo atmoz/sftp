@@ -1,0 +1,9 @@
+version: '2'
+
+services:
+
+  sftp:
+    build: .
+    volumes:
+      - ./tests/testusers.conf:/etc/sftp/users.conf
+

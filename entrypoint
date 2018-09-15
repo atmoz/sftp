@@ -5,6 +5,8 @@ set -e
 userConfPath="/etc/sftp/users.conf"
 userConfPathLegacy="/etc/sftp-users.conf"
 userConfFinalPath="/var/run/sftp/users.conf"
+userProvisionedFinalPath="/var/run/sftp/users.provisioned"
+userProvisionedTmpPath="/var/run/sftp/users.diff"
 
 # Extended regular expression (ERE) for arguments
 reUser='[A-Za-z0-9._][A-Za-z0-9._-]{0,31}' # POSIX.1-2008
@@ -124,8 +126,20 @@ if [ ! -f "$userConfPath" -a -f "$userConfPathLegacy" ]; then
     ln -s "$userConfPathLegacy" "$userConfPath"
 fi
 
+if [ -f "$userProvisionedFinalPath" ]; then
+    set +e
+    diff "$userProvisionedFinalPath" "$userConfPath" \
+      | tail -n+3 \
+      | grep -E '^\+.*$' \
+      | cut -c2- \
+      | grep -v -E '^\s*#' > "$userProvisionedTmpPath"
+    set -e
+    SFTP_USERS="$(cat $userProvisionedTmpPath)"
+    rm -f $userProvisionedTmpPath
+fi
+
 # Create users only on first run
-if [ ! -f "$userConfFinalPath" ]; then
+if [ ! -f "$userConfFinalPath" ] || [ -n "$SFTP_USERS" ]; then
     mkdir -p "$(dirname $userConfFinalPath)"
 
     # Append mounted config to final config
@@ -154,6 +168,7 @@ if [ ! -f "$userConfFinalPath" ]; then
         while IFS= read -r user || [[ -n "$user" ]]; do
             createUser "$user"
         done < "$userConfFinalPath"
+        cp "$userConfFinalPath" "$userProvisionedFinalPath"
     elif $startSshd; then
         log "FATAL: No users provided!"
         exit 3
