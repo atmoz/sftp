@@ -206,7 +206,7 @@ fi
 if [ ! -z "$EXCLUDE_FROM_LOG_LIST" ]; then
 
     echo $EXCLUDE_FROM_LOG_LIST| base64 -d > /exclude.txt
-    exec /usr/sbin/sshd -D -e | grep -v -f /exclude.txt
+    exec /usr/sbin/sshd -D -e |& grep -v -f /exclude.txt
 
 else
     exec /usr/sbin/sshd -D -e
