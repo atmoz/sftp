@@ -1,5 +1,5 @@
 FROM debian:stretch
-MAINTAINER Adrian Dvergsdal [atmoz.net]
+
 
 # - Install packages
 # - OpenSSH needs /var/run/sshd to run

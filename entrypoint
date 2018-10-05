@@ -191,6 +191,7 @@ if [ ! -z ${HOST_SSH_ED25519_KEY+x} ]; then
 fi
 
 
+
 # Source custom scripts, if any
 if [ -d /etc/sftp.d ]; then
     for f in /etc/sftp.d/*; do
@@ -202,4 +203,11 @@ if [ -d /etc/sftp.d ]; then
     unset f
 fi
 
-exec /usr/sbin/sshd -D -e
+if [ ! -z "$EXCLUDE_FROM_LOG_LIST" ]; then
+
+    echo $EXCLUDE_FROM_LOG_LIST| base64 -d > /exclude.txt
+    exec /usr/sbin/sshd -D -e | grep -v -f /exclude.txt
+
+else
+    exec /usr/sbin/sshd -D -e
+fi
