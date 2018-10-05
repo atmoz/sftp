@@ -2,7 +2,7 @@ Port 2222
 # Secure defaults
 # See: https://stribika.github.io/2015/01/04/secure-secure-shell.html
 Protocol 2
-HostKey /etc/ssh/ssh_host_ed25519_key
+#HostKey /etc/ssh/ssh_host_ed25519_key
 HostKey /etc/ssh/ssh_host_rsa_key
 
 # Faster connection
