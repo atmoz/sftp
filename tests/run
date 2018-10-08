@@ -43,7 +43,7 @@ function beforeTest() {
     rm -rf "$tmpDir" # clean state
     mkdir "$tmpDir"
 
-    echo "test::$(id -u):$(id -g):dir1,dir2" >> "$tmpDir/users"
+    echo "test::$(id -u):$(id -g):dir1,dir 2" >> "$tmpDir/users"
     echo "" >> "$tmpDir/users" # empty line
     echo "# comments are allowed" >> "$tmpDir/users"
     echo "  " >> "$tmpDir/users" # only whitespace
@@ -172,7 +172,7 @@ function testDir() {
         "cd dir1" \
         "mkdir test-dir1" \
         "get -rf test-dir1 $tmpDir/" \
-        "cd ../dir2" \
+        "cd '../dir 2'" \
         "mkdir test-dir2" \
         "get -rf test-dir2 $tmpDir/" \
         "exit"

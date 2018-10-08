@@ -98,12 +98,12 @@ function createUser() {
     # Make sure dirs exists
     if [ -n "$dir" ]; then
         IFS=',' read -a dirArgs <<< $dir
-        for dirPath in ${dirArgs[@]}; do
+        for dirPath in "${dirArgs[@]}"; do
             dirPath="/home/$user/$dirPath"
             if [ ! -d "$dirPath" ]; then
                 log "Creating directory: $dirPath"
-                mkdir -p $dirPath
-                chown -R $uid:users $dirPath
+                mkdir -p "$dirPath"
+                chown -R $uid:users "$dirPath"
             else
                 log "Directory already exists: $dirPath"
             fi
