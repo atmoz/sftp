@@ -1,5 +1,8 @@
 #!/bin/bash
-set -e
+set -Eeo pipefail
+
+# shellcheck disable=2154
+trap 's=$?; echo "$0: Error on line "$LINENO": $BASH_COMMAND"; exit $s' ERR
 
 # Paths
 userConfPath="/etc/sftp/users.conf"
@@ -12,12 +15,12 @@ rePass='[^:]{0,255}'
 reUid='[[:digit:]]*'
 reGid='[[:digit:]]*'
 reDir='[^:]*'
-reArgs="^($reUser)(:$rePass)(:e)?(:$reUid)?(:$reGid)?(:$reDir)?$"
+#reArgs="^($reUser)(:$rePass)(:e)?(:$reUid)?(:$reGid)?(:$reDir)?$"
 reArgsMaybe="^[^:[:space:]]+:.*$" # Smallest indication of attempt to use argument
 reArgSkip='^([[:blank:]]*#.*|[[:blank:]]*)$' # comment or empty line
 
 function log() {
-    echo "[entrypoint] $@"
+    echo "[entrypoint] $*"
 }
 
 function validateArg() {
@@ -34,13 +37,12 @@ function validateArg() {
 }
 
 function createUser() {
-    log "Parsing user data: \"$@\""
-
-    IFS=':' read -a args <<< $@
+    log "Parsing user data: \"$1\""
+    IFS=':' read -ra args <<< "$1"
 
     skipIndex=0
     chpasswdOptions=""
-    useraddOptions="--no-user-group"
+    useraddOptions=(--no-user-group)
 
     user="${args[0]}"; validateArg "username" "$user" "$reUser" || return 1
     pass="${args[1]}"; validateArg "password" "$pass" "$rePass" || return 1
@@ -50,60 +52,60 @@ function createUser() {
         skipIndex=1
     fi
 
-    uid="${args[$[$skipIndex+2]]}"; validateArg "UID" "$uid" "$reUid" || return 1
-    gid="${args[$[$skipIndex+3]]}"; validateArg "GID" "$gid" "$reGid" || return 1
-    dir="${args[$[$skipIndex+4]]}"; validateArg "dirs" "$dir" "$reDir" || return 1
+    uid="${args[$((skipIndex+2))]}"; validateArg "UID" "$uid" "$reUid" || return 1
+    gid="${args[$((skipIndex+3))]}"; validateArg "GID" "$gid" "$reGid" || return 1
+    dir="${args[$((skipIndex+4))]}"; validateArg "dirs" "$dir" "$reDir" || return 1
 
-    if getent passwd $user > /dev/null; then
+    if getent passwd "$user" > /dev/null; then
         log "WARNING: User \"$user\" already exists. Skipping."
         return 0
     fi
 
     if [ -n "$uid" ]; then
-        useraddOptions="$useraddOptions --non-unique --uid $uid"
+        useraddOptions+=(--non-unique --uid "$uid")
     fi
 
     if [ -n "$gid" ]; then
-        if ! getent group $gid > /dev/null; then
-            groupadd --gid $gid "group_$gid"
+        if ! getent group "$gid" > /dev/null; then
+            groupadd --gid "$gid" "group_$gid"
         fi
 
-        useraddOptions="$useraddOptions --gid $gid"
+        useraddOptions+=(--gid "$gid")
     fi
 
-    useradd $useraddOptions $user
-    mkdir -p /home/$user
-    chown root:root /home/$user
-    chmod 755 /home/$user
+    useradd "${useraddOptions[@]}" "$user"
+    mkdir -p "/home/$user"
+    chown root:root "/home/$user"
+    chmod 755 "/home/$user"
 
     # Retrieving user id to use it in chown commands instead of the user name
     # to avoid problems on alpine when the user name contains a '.'
-    uid="$(id -u $user)"
+    uid="$(id -u "$user")"
 
     if [ -n "$pass" ]; then
         echo "$user:$pass" | chpasswd $chpasswdOptions
     else
-        usermod -p "*" $user # disabled password
+        usermod -p "*" "$user" # disabled password
     fi
 
     # Add SSH keys to authorized_keys with valid permissions
-    if [ -d /home/$user/.ssh/keys ]; then
-        for publickey in /home/$user/.ssh/keys/*; do
-            cat $publickey >> /home/$user/.ssh/authorized_keys
+    if [ -d "/home/$user/.ssh/keys" ]; then
+        for publickey in "/home/$user/.ssh/keys"/*; do
+            cat "$publickey" >> "/home/$user/.ssh/authorized_keys"
         done
-        chown $uid /home/$user/.ssh/authorized_keys
-        chmod 600 /home/$user/.ssh/authorized_keys
+        chown "$uid" "/home/$user/.ssh/authorized_keys"
+        chmod 600 "/home/$user/.ssh/authorized_keys"
     fi
 
     # Make sure dirs exists
     if [ -n "$dir" ]; then
-        IFS=',' read -a dirArgs <<< $dir
-        for dirPath in ${dirArgs[@]}; do
+        IFS=',' read -ra dirArgs <<< "$dir"
+        for dirPath in "${dirArgs[@]}"; do
             dirPath="/home/$user/$dirPath"
             if [ ! -d "$dirPath" ]; then
                 log "Creating directory: $dirPath"
-                mkdir -p $dirPath
-                chown -R $uid:users $dirPath
+                mkdir -p "$dirPath"
+                chown -R "$uid:users" "$dirPath"
             else
                 log "Directory already exists: $dirPath"
             fi
@@ -119,7 +121,7 @@ else
 fi
 
 # Backward compatibility with legacy config path
-if [ ! -f "$userConfPath" -a -f "$userConfPathLegacy" ]; then
+if [ ! -f "$userConfPath" ] && [ -f "$userConfPathLegacy" ]; then
     mkdir -p "$(dirname $userConfPath)"
     ln -s "$userConfPathLegacy" "$userConfPath"
 fi
@@ -130,7 +132,7 @@ if [ ! -f "$userConfFinalPath" ]; then
 
     # Append mounted config to final config
     if [ -f "$userConfPath" ]; then
-        cat "$userConfPath" | grep -v -E "$reArgSkip" > "$userConfFinalPath"
+        grep -v -E "$reArgSkip" < "$userConfPath" > "$userConfFinalPath"
     fi
 
     if $startSshd; then
@@ -142,14 +144,14 @@ if [ ! -f "$userConfFinalPath" ]; then
 
     if [ -n "$SFTP_USERS" ]; then
         # Append users from environment variable to final config
-        usersFromEnv=($SFTP_USERS) # as array
+        IFS=" " read -r -a usersFromEnv <<< "$SFTP_USERS"
         for user in "${usersFromEnv[@]}"; do
             echo "$user" >> "$userConfFinalPath"
         done
     fi
 
     # Check that we have users in config
-    if [[ -f "$userConfFinalPath" && "$(cat "$userConfFinalPath" | wc -l)" > 0 ]]; then
+    if [ -f "$userConfFinalPath" ] && [ "$(wc -l < "$userConfFinalPath")" -gt 0 ]; then
         # Import users from final conf file
         while IFS= read -r user || [[ -n "$user" ]]; do
             createUser "$user"
@@ -185,6 +187,6 @@ if $startSshd; then
     log "Executing sshd"
     exec /usr/sbin/sshd -D -e
 else
-    log "Executing $@"
+    log "Executing $*"
     exec "$@"
 fi
