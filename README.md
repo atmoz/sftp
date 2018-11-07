@@ -8,8 +8,7 @@
 
 - [`debian-stretch`, `debian`, `latest` (*Dockerfile*)](https://github.com/atmoz/sftp/blob/master/Dockerfile) [![](https://images.microbadger.com/badges/image/atmoz/sftp.svg)](http://microbadger.com/images/atmoz/sftp "Get your own image badge on microbadger.com")
 - [`debian-jessie` (*Dockerfile*)](https://github.com/atmoz/sftp/blob/debian-jessie/Dockerfile) [![](https://images.microbadger.com/badges/image/atmoz/sftp:debian-jessie.svg)](http://microbadger.com/images/atmoz/sftp:debian-jessie "Get your own image badge on microbadger.com")
-- [`alpine-3.7`, `alpine` (*Dockerfile*)](https://github.com/atmoz/sftp/blob/alpine/Dockerfile) [![](https://images.microbadger.com/badges/image/atmoz/sftp:alpine-3.7.svg)](http://microbadger.com/images/atmoz/sftp:alpine-3.7 "Get your own image badge on microbadger.com")
-- [`alpine-3.6` (*Dockerfile*)](https://github.com/atmoz/sftp/blob/alpine-3.6/Dockerfile) [![](https://images.microbadger.com/badges/image/atmoz/sftp:alpine-3.6.svg)](http://microbadger.com/images/atmoz/sftp:alpine-3.6 "Get your own image badge on microbadger.com")
+- [`alpine` (*Dockerfile*)](https://github.com/atmoz/sftp/blob/alpine/Dockerfile) [![](https://images.microbadger.com/badges/image/atmoz/sftp:alpine.svg)](http://microbadger.com/images/atmoz/sftp:alpine "Get your own image badge on microbadger.com")
 
 # Securely share your files
 
