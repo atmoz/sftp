@@ -150,6 +150,15 @@ if [ ! -f "$userConfFinalPath" ]; then
         done
     fi
 
+    if [ -n "$DOCKER_SECRET" ]; then
+        #Append users from Docker secret to final config
+        secret=$(cat "/run/secrets/$DOCKER_SECRET")
+        for user in $secret
+        do
+            echo "$user" >> "$userConfFinalPath"
+        done
+    fi
+
     # Check that we have users in config
     if [ -f "$userConfFinalPath" ] && [ "$(wc -l < "$userConfFinalPath")" -gt 0 ]; then
         # Import users from final conf file
