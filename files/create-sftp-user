@@ -1,0 +1,105 @@
+#!/bin/bash
+set -Eeo pipefail
+
+# shellcheck disable=2154
+trap 's=$?; echo "$0: Error on line "$LINENO": $BASH_COMMAND"; exit $s' ERR
+
+# Extended regular expression (ERE) for arguments
+reUser='[A-Za-z0-9._][A-Za-z0-9._-]{0,31}' # POSIX.1-2008
+rePass='[^:]{0,255}'
+reUid='[[:digit:]]*'
+reGid='[[:digit:]]*'
+reDir='[^:]*'
+#reArgs="^($reUser)(:$rePass)(:e)?(:$reUid)?(:$reGid)?(:$reDir)?$"
+
+function log() {
+    echo "[$0] $*"
+}
+
+function validateArg() {
+    name="$1"
+    val="$2"
+    re="$3"
+
+    if [[ "$val" =~ ^$re$ ]]; then
+        return 0
+    else
+        log "ERROR: Invalid $name \"$val\", do not match required regex pattern: $re"
+        return 1
+    fi
+}
+
+log "Parsing user data: \"$1\""
+IFS=':' read -ra args <<< "$1"
+
+skipIndex=0
+chpasswdOptions=""
+useraddOptions=(--no-user-group)
+
+user="${args[0]}"; validateArg "username" "$user" "$reUser" || return 1
+pass="${args[1]}"; validateArg "password" "$pass" "$rePass" || return 1
+
+if [ "${args[2]}" == "e" ]; then
+    chpasswdOptions="-e"
+    skipIndex=1
+fi
+
+uid="${args[$((skipIndex+2))]}"; validateArg "UID" "$uid" "$reUid" || return 1
+gid="${args[$((skipIndex+3))]}"; validateArg "GID" "$gid" "$reGid" || return 1
+dir="${args[$((skipIndex+4))]}"; validateArg "dirs" "$dir" "$reDir" || return 1
+
+if getent passwd "$user" > /dev/null; then
+    log "WARNING: User \"$user\" already exists. Skipping."
+    return 0
+fi
+
+if [ -n "$uid" ]; then
+    useraddOptions+=(--non-unique --uid "$uid")
+fi
+
+if [ -n "$gid" ]; then
+    if ! getent group "$gid" > /dev/null; then
+        groupadd --gid "$gid" "group_$gid"
+    fi
+
+    useraddOptions+=(--gid "$gid")
+fi
+
+useradd "${useraddOptions[@]}" "$user"
+mkdir -p "/home/$user"
+chown root:root "/home/$user"
+chmod 755 "/home/$user"
+
+# Retrieving user id to use it in chown commands instead of the user name
+# to avoid problems on alpine when the user name contains a '.'
+uid="$(id -u "$user")"
+
+if [ -n "$pass" ]; then
+    echo "$user:$pass" | chpasswd $chpasswdOptions
+else
+    usermod -p "*" "$user" # disabled password
+fi
+
+# Add SSH keys to authorized_keys with valid permissions
+if [ -d "/home/$user/.ssh/keys" ]; then
+    for publickey in "/home/$user/.ssh/keys"/*; do
+        cat "$publickey" >> "/home/$user/.ssh/authorized_keys"
+    done
+    chown "$uid" "/home/$user/.ssh/authorized_keys"
+    chmod 600 "/home/$user/.ssh/authorized_keys"
+fi
+
+# Make sure dirs exists
+if [ -n "$dir" ]; then
+    IFS=',' read -ra dirArgs <<< "$dir"
+    for dirPath in "${dirArgs[@]}"; do
+        dirPath="/home/$user/$dirPath"
+        if [ ! -d "$dirPath" ]; then
+            log "Creating directory: $dirPath"
+            mkdir -p "$dirPath"
+            chown -R "$uid:users" "$dirPath"
+        else
+            log "Directory already exists: $dirPath"
+        fi
+    done
+fi
