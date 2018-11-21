@@ -1,4 +1,6 @@
-FROM debian:stretch
+ARG DEBIAN_VERSION=stretch-slim
+
+FROM debian:${DEBIAN_VERSION}
 MAINTAINER Adrian Dvergsdal [atmoz.net]
 
 # Steps done in one RUN layer:
