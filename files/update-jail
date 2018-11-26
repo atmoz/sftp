@@ -1,0 +1,281 @@
+#!/usr/bin/perl -w
+
+#
+#   update-jail - easy chroot-jail creation tool
+#   Copyright (C) 2002  Georg Bauer <gb@bofh.ms>
+#
+#   This program is free software; you can redistribute it and/or modify
+#   it under the terms of the GNU General Public License as published by
+#   the Free Software Foundation; either version 2 of the License, or
+#   (at your option) any later version.
+#
+#   This program is distributed in the hope that it will be useful,
+#   but WITHOUT ANY WARRANTY; without even the implied warranty of
+#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#   GNU General Public License for more details.
+#
+#   You should have received a copy of the GNU General Public License
+#   along with this program; if not, write to the Free Software
+#   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+#
+
+use strict;
+
+sub collectDirs {
+   my ($collection, $dir) = @_;
+   opendir DIR, $dir or die "opendir($dir): $!";
+   my @files = readdir DIR;
+   closedir DIR;
+   foreach my $f (@files) {
+      next if substr($f, 0, 1) eq '.';
+      push @$collection, $dir.'/'.$f;
+      &collectDirs($collection, $dir.'/'.$f) if -d $dir.'/'.$f;
+   }
+}
+
+umask 0;
+$|=1;
+
+my $simulate = 0;
+if (defined($ARGV[0])) {
+   if ($ARGV[0] eq '-s') {
+      $simulate = 1;
+      shift @ARGV;
+   }
+}
+
+my $jailfile = $ARGV[0] || '';
+
+if (!$jailfile) {
+print <<'EOUSAGE';
+jailtools version 1.1, Copyright (C) 2002 Georg Bauer <gb@bofh.ms>
+jailtools comes with ABSOLUTELY NO WARRANTY; this is free software and
+you are welcome to redistribute it under certain conditions; for details
+look into the source or the LICENSE file that came with this script.
+
+usage: update-jail [-s] <jailfile>
+EOUSAGE
+exit 1;
+}
+
+my @files = ();
+my @conffiles = ();
+my @devices = ();
+my @prune = ();
+my @graft = ();
+
+my $target;
+my $name;
+my $start;
+my $stop;
+
+my %files = ();
+
+open JF, $jailfile or die 'Can not open the jailfile';
+while (<JF>) {
+   chomp;
+   if (/^TARGET=(.*)$/) {
+      $target = $1;
+   } elsif (/^NAME=(.*)$/) {
+      $name = $1;
+   } elsif (/^START=(.*)$/) {
+      $start = $1;
+   } elsif (/^STOP=(.*)$/) {
+      $stop = $1;
+   } elsif (/^DEB=(.*)$/) {
+      my %conffiles = ();
+      if (open IN, '/var/lib/dpkg/info/' . $1 . '.conffiles') {
+         while (<IN>) {
+	    chomp;
+	    push @conffiles, $_ if !$files{$_};
+	    $conffiles{$_} = 1;
+	    $files{$_} = 1;
+	 }
+         close IN;
+      }
+      if (open IN, '/var/lib/dpkg/info/' . $1 . '.list') {
+         while(<IN>) {
+	    chomp;
+	    push @files, $_ if (!$conffiles{$_}) && (!$files{$_});
+	    $files{$_} = 1;
+	 }
+         close IN;
+      } else {
+         warn 'Package ' . $1 . ' not found';
+      }
+   } elsif (/^PERL=(.*)$/) {
+      my $found = 0;
+      foreach my $spath (@INC) {
+         if (open IN, $spath.'/auto/' . $1 .
+                      '/.packlist') {
+	    $found = 1;
+            while(<IN>) {
+	       chomp;
+	       my $file = $_;
+	       my @dirs = ($file);
+	       while ($file =~ /^(.*)\/[^\/]+$/) {
+	          push @dirs, $1 if $1 && (!$files{$1});
+	          $files{$1} = 1;
+	          $file = $1;
+	       }
+	       push @files, reverse(@dirs);
+	    }
+            close IN;
+	 }
+      }
+      if (!$found) {
+         warn 'Perl Module ' . $1 . ' not found';
+      }
+   } elsif (/^FILE=(.*)$/) {
+      push @files, $1;
+   } elsif (/^DIR=(.*)$/) {
+      push @files, $1;
+   } elsif (/^RECURSE=(\/.*)$/) {
+      push @files, $1;
+      collectDirs \@files, $1;
+   } elsif (/^RECURSEONCE=(\/.*)$/) {
+      push @conffiles, $1;
+      collectDirs \@conffiles, $1;
+   } elsif (/^CONFFILE=(.*)$/) {
+      push @conffiles, $1;
+   } elsif (/^DEVICE=(.*)$/) {
+      push @devices, $1;
+   } elsif (/^PRUNE=(.*)$/) {
+      push @prune, $1;
+   } elsif (/^GRAFT=(.*)$/) {
+      push @graft, $1;
+   }
+}
+close JF;
+
+die 'Need TARGET tag in jailfile' if !$target;
+die 'Need some files in jailfile' if !@files;
+
+if ($simulate) {
+   print "SIMUL: creating target directory $target\n";
+} else {
+   mkdir $target, 0755;
+   die 'TARGET not a directory' if ! -d $target;
+}
+
+print "copying files, please wait ...\n";
+FILES: foreach my $file (@files) {
+   foreach my $prune (@prune) {
+      if (substr($file, 0, length($prune)) eq $prune) {
+         my $graft;
+         foreach my $graft (@graft) {
+	    $graft ||= (substr($file, 0, length($graft)) eq $graft);
+	 }
+         next FILES if !$graft;
+      }
+   }
+   if (-d $file) {
+      next if -d $target . $file;
+      my ($mode, $uid, $gid) = (stat($file))[2,4,5];
+      $mode = $mode & 07777;
+      if ($simulate) {
+         print "SIMUL: creating directory $target$file with mode 0".sprintf('%03o',$mode)."\n";
+	 print "SIMUL: changing user on $target$file to $uid.$gid\n";
+      } else {
+         mkdir $target . $file, $mode;
+         chown $uid, $gid, $target . $file;
+      }
+   } elsif (-r $file) {
+      if ($simulate) {
+         print "SIMUL: syncing $file with $target$file\n";
+      } else {
+         system "rsync -qlpogtD $file $target$file";
+      }
+   }
+}
+
+print "copying conffiles, please wait ...\n";
+CONFFILES: foreach my $file (@conffiles) {
+   foreach my $prune (@prune) {
+      if (substr($file, 0, length($prune)) eq $prune) {
+         my $graft;
+         foreach my $graft (@graft) {
+	    $graft ||= (substr($file, 0, length($graft)) eq $graft);
+	 }
+         next CONFFILES if !$graft;
+      }
+   }
+   if (-d $file) {
+      next if -d $target . $file;
+      my ($mode, $uid, $gid) = (stat($file))[2,4,5];
+      $mode = $mode & 07777;
+      if ($simulate) {
+         print "SIMUL: creating directory $target$file with mode 0".sprintf('%03o',$mode)."\n";
+	 print "SIMUL: changing owner on $target$file to $uid.$gid\n";
+      } else {
+         mkdir $target . $file, $mode;
+         chown $uid, $gid, $target . $file;
+      }
+   } elsif (-r $file) {
+      next if -r $target . $file;
+      if ($simulate) {
+         print "SIMUL: syncing $file with $target$file\n";
+      } else {
+         system "rsync -qlpogtD $file $target$file";
+      }
+   }
+}
+
+print "creating devices ...\n";
+foreach my $device (@devices) {
+   my ($mode, $uid, $gid, $rdev) = (stat($device))[2,4,5,6];
+   next if !defined($mode);
+   my $type = ($mode & 070000) >> 12;
+   $mode = $mode & 07777;
+   if ($type == 6) {
+      $type = 'b';
+   } elsif ($type == 2) {
+      $type = 'c';
+   } else {
+      die 'Illegal device type ' . $type;
+   }
+   my $major = ($rdev & 0xff00) >> 8;
+   my $minor = ($rdev & 0xff);
+   if ($simulate) {
+      print "SIMUL: creating node $target$device with type $type $major.$minor\n";
+      print "SIMUL: changing owner on $target$device to $uid.$gid\n";
+      print "SIMUL: changing mode on $target$device to ".sprintf('0%03o',$mode)."\n";
+   } else {
+      system "mknod $target$device $type $major $minor"
+         if (! -r $target . $device);
+      chown $uid, $gid, $target . $device;
+      chmod $mode, $target . $device;
+   }
+}
+
+if ($name && $start && $stop && !$simulate) {
+   open OUT, '>/etc/init.d/chroot-' . $name or
+      die 'Can not create init.d script';
+   print OUT <<"EOSCRIPT";
+#! /bin/sh
+set -e
+case "\$1" in
+  start)
+        chroot $target $start
+        ;;
+  stop)
+        chroot $target $stop
+        ;;
+  restart|force-reload)
+        chroot $target $stop
+        sleep 1
+        chroot $target $start
+        ;;
+  *)
+	echo "Usage: chroot-$name {start|stop|restart|force-reload}" >\&2
+        exit 1
+        ;;
+esac
+exit 0
+EOSCRIPT
+   close OUT;
+   chmod 0755, '/etc/init.d/chroot-' . $name;
+} elsif ($name && $start && $stop && $simulate) {
+   print "SIMUL: creating init.d script /etc/init.d/chroot-$name\n";
+   print "SIMUL: changing mode on /etc/init.d/chroot-$name to 0755\n";
+}

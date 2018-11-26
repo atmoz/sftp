@@ -70,6 +70,10 @@ mkdir -p "/home/$user"
 chown root:root "/home/$user"
 chmod 755 "/home/$user"
 
+# Use the jail script to build the user a jail
+sed "s/{REPLACE}/\/home\/$user/" /usr/local/bin/scp.jail > ~/scp.jail.tmp
+/usr/local/bin/update-jail ~/scp.jail.tmp
+
 # Retrieving user id to use it in chown commands instead of the user name
 # to avoid problems on alpine when the user name contains a '.'
 uid="$(id -u "$user")"

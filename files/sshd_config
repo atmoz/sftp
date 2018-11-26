@@ -1,3 +1,6 @@
+# modified to support weak settings for Cisco IOS devices
+# and to allow SCP access in addition to SFTP
+
 # Secure defaults
 # See: https://stribika.github.io/2015/01/04/secure-secure-shell.html
 Protocol 2
@@ -15,8 +18,10 @@ AllowTcpForwarding no
 
 # Force sftp and chroot jail
 Subsystem sftp internal-sftp
-ForceCommand internal-sftp
 ChrootDirectory %h
+
+KexAlgorithms curve25519-sha256@libssh.org,diffie-hellman-group1-sha1,diffie-hellman-group14-sha1,diffie-hellman-group-exchange-sha1,diffie-hellman-group-exchange-sha256,ecdh-sha2-nistp256,ecdh-sha2-nistp384,ecdh-sha2-nistp521
+Ciphers aes128-ctr,aes192-ctr,aes256-ctr,aes128-gcm@openssh.com,aes256-gcm@openssh.com,chacha20-poly1305@openssh.com,blowfish-cbc,aes128-cbc,3des-cbc,cast128-cbc,arcfour,aes192-cbc,aes256-cbc
 
 # Enable this for more logs
 #LogLevel VERBOSE
