@@ -253,22 +253,25 @@ function testCreateUsersUsingCombo() {
 function testWriteAccessToAutocreatedDirs() {
     docker run --name "$containerName" -d \
         -v "/tmp/atmoz_sftp_test_rsa.pub":/home/test/.ssh/keys/id_rsa.pub:ro \
-        "$imageName" test::::dir1,dir2 \
+        "$imageName" "test::::testdir,dir with spaces" \
         > "$redirect" 2>&1
 
     waitForServer "$containerName"
     assertTrue "waitForServer" $?
 
     runSftpCommands "$containerName" "test" \
-        "cd dir1" \
+        "cd testdir" \
         "mkdir test" \
-        "cd ../dir2" \
+        "cd '../dir with spaces'" \
         "mkdir test" \
         "exit"
     assertTrue "runSftpCommands" $?
 
-    docker exec "$containerName" test -d /home/test/dir1/test -a -d /home/test/dir2/test
-    assertTrue "dirs exists" $?
+    docker exec "$containerName" test -d /home/test/testdir/test
+    assertTrue "testdir write access" $?
+
+    docker exec "$containerName" test -d "/home/test/dir with spaces/test"
+    assertTrue "dir with spaces write access" $?
 }
 
 function testBindmountDirScript() {

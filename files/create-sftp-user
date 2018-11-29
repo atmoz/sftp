@@ -36,21 +36,21 @@ skipIndex=0
 chpasswdOptions=""
 useraddOptions=(--no-user-group)
 
-user="${args[0]}"; validateArg "username" "$user" "$reUser" || return 1
-pass="${args[1]}"; validateArg "password" "$pass" "$rePass" || return 1
+user="${args[0]}"; validateArg "username" "$user" "$reUser" || exit 1
+pass="${args[1]}"; validateArg "password" "$pass" "$rePass" || exit 1
 
 if [ "${args[2]}" == "e" ]; then
     chpasswdOptions="-e"
     skipIndex=1
 fi
 
-uid="${args[$((skipIndex+2))]}"; validateArg "UID" "$uid" "$reUid" || return 1
-gid="${args[$((skipIndex+3))]}"; validateArg "GID" "$gid" "$reGid" || return 1
-dir="${args[$((skipIndex+4))]}"; validateArg "dirs" "$dir" "$reDir" || return 1
+uid="${args[$((skipIndex+2))]}"; validateArg "UID" "$uid" "$reUid" || exit 1
+gid="${args[$((skipIndex+3))]}"; validateArg "GID" "$gid" "$reGid" || exit 1
+dir="${args[$((skipIndex+4))]}"; validateArg "dirs" "$dir" "$reDir" || exit 1
 
 if getent passwd "$user" > /dev/null; then
     log "WARNING: User \"$user\" already exists. Skipping."
-    return 0
+    exit 0
 fi
 
 if [ -n "$uid" ]; then
