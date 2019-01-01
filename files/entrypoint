@@ -11,6 +11,8 @@ reArgSkip='^([[:blank:]]*#.*|[[:blank:]]*)$' # comment or empty line
 userConfPath="/etc/sftp/users.conf"
 userConfPathLegacy="/etc/sftp-users.conf"
 userConfFinalPath="/var/run/sftp/users.conf"
+userProvisionedFinalPath="/var/run/sftp/users.provisioned"
+userProvisionedTmpPath="/var/run/sftp/users.diff"
 
 function log() {
     echo "[$0] $*" >&2
@@ -29,8 +31,21 @@ if [ ! -f "$userConfPath" ] && [ -f "$userConfPathLegacy" ]; then
     ln -s "$userConfPathLegacy" "$userConfPath"
 fi
 
-# Create users only on first run
-if [ ! -f "$userConfFinalPath" ]; then
+# Check for differences between defined and provisioned users
+if [ -f "$userProvisionedFinalPath" ]; then
+    set +e
+    diff "$userProvisionedFinalPath" "$userConfPath" \
+      | tail -n+3 \
+      | grep -E '^\+.*$' \
+      | cut -c2- \
+      | grep -v -E '^\s*#' > "$userProvisionedTmpPath"
+    set -e
+    SFTP_USERS="$(cat $userProvisionedTmpPath)"
+    rm -f "$userProvisionedTmpPath"
+fi
+
+# Create users on first run and if new entries are present
+if [ ! -f "$userConfFinalPath" ] || [ -n "$SFTP_USERS" ]; then
     mkdir -p "$(dirname $userConfFinalPath)"
 
     if [ -f "$userConfPath" ]; then
