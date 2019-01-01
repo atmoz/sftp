@@ -34,14 +34,16 @@ fi
 # Check for differences between defined and provisioned users
 if [ -f "$userProvisionedFinalPath" ]; then
     set +e
-    diff "$userProvisionedFinalPath" "$userConfPath" \
-      | tail -n+3 \
-      | grep -E '^\+.*$' \
-      | cut -c2- \
-      | grep -v -E '^\s*#' > "$userProvisionedTmpPath"
+    _raw_diff="$(diff "$userProvisionedFinalPath" "$userConfPath" || true)"
     set -e
-    SFTP_USERS="$(cat $userProvisionedTmpPath)"
-    rm -f "$userProvisionedTmpPath"
+    if [ -n "$_raw_diff" ]; then
+        _diff_lines="$(echo "$_raw_diff" | tail -n+2)"
+        _diff_new_entries="$(echo "$_diff_lines" | grep -E '^[+>].*$' | grep -o '^\s*[^#]*')"
+        _new_entries="$(echo "$_diff_new_entries" | cut -c2- | sed -e 's/^[ \t]*//')"
+        echo "$_new_entries" > "$userProvisionedTmpPath"
+        SFTP_USERS="$SFTP_USERS $(cat $userProvisionedTmpPath)"
+        rm -f "$userProvisionedTmpPath"
+    fi
 fi
 
 # Create users on first run and if new entries are present
@@ -74,6 +76,7 @@ if [ ! -f "$userConfFinalPath" ] || [ -n "$SFTP_USERS" ]; then
         while IFS= read -r user || [[ -n "$user" ]]; do
             create-sftp-user "$user"
         done < "$userConfFinalPath"
+        cp "$userConfFinalPath" "$userProvisionedFinalPath"
     elif $startSshd; then
         log "FATAL: No users provided!"
         exit 3
