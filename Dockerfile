@@ -1,4 +1,4 @@
-FROM debian:stretch
+FROM ubuntu:trusty
 MAINTAINER Adrian Dvergsdal [atmoz.net]
 
 # Steps done in one RUN layer:
