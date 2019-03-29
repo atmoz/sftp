@@ -16,7 +16,7 @@ AllowTcpForwarding no
 # Force sftp and chroot jail
 Subsystem sftp internal-sftp
 ForceCommand internal-sftp
-ChrootDirectory %h
+ChrootDirectory /chroot
 
 # Enable this for more logs
 #LogLevel VERBOSE
