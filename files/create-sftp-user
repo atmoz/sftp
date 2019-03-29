@@ -66,9 +66,13 @@ if [ -n "$gid" ]; then
 fi
 
 useradd "${useraddOptions[@]}" "$user"
-mkdir -p "/home/$user"
-chown root:root "/home/$user"
-chmod 755 "/home/$user"
+mkdir -p "/chroot/home/$user"
+chown "$user:users" "/chroot/home/$user"
+chmod 700 "/chroot/home/$user"
+
+# Symlink the user's chroot home dir back to the os default location
+# this is required to ensure the sshd can locate the ".ssh/authorized_keys" file
+ln -s "/chroot/home/$user" "/home/$user"
 
 # Retrieving user id to use it in chown commands instead of the user name
 # to avoid problems on alpine when the user name contains a '.'
@@ -93,7 +97,7 @@ fi
 if [ -n "$dir" ]; then
     IFS=',' read -ra dirArgs <<< "$dir"
     for dirPath in "${dirArgs[@]}"; do
-        dirPath="/home/$user/$dirPath"
+        dirPath="/chroot/home/$user/$dirPath"
         if [ ! -d "$dirPath" ]; then
             log "Creating directory: $dirPath"
             mkdir -p "$dirPath"
