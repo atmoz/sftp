@@ -86,9 +86,14 @@ if [ -d /etc/sftp.d ]; then
     unset f
 fi
 
+# Fail2ban
+touch /var/log/auth.log
+service fail2ban start
+
 if $startSshd; then
     log "Executing sshd"
     exec /usr/sbin/sshd -D -e
+    tail -f /var/log/auth.log
 else
     log "Executing $*"
     exec "$@"
