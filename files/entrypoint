@@ -16,21 +16,14 @@ function log() {
     echo "[$0] $*" >&2
 }
 
-# Allow running other programs, e.g. bash
-if [[ -z "$1" || "$1" =~ $reArgsMaybe ]]; then
-    startSshd=true
-else
-    startSshd=false
-fi
+function createUsers() {
 
-# Backward compatibility with legacy config path
-if [ ! -f "$userConfPath" ] && [ -f "$userConfPathLegacy" ]; then
-    mkdir -p "$(dirname $userConfPath)"
-    ln -s "$userConfPathLegacy" "$userConfPath"
-fi
+    # Backward compatibility with legacy config path
+    if [ ! -f "$userConfPath" ] && [ -f "$userConfPathLegacy" ]; then
+        mkdir -p "$(dirname $userConfPath)"
+        ln -s "$userConfPathLegacy" "$userConfPath"
+    fi
 
-# Create users only on first run
-if [ ! -f "$userConfFinalPath" ]; then
     mkdir -p "$(dirname $userConfFinalPath)"
 
     if [ -f "$userConfPath" ]; then
@@ -71,7 +64,26 @@ if [ ! -f "$userConfFinalPath" ]; then
     if [ ! -f /etc/ssh/ssh_host_rsa_key ]; then
         ssh-keygen -t rsa -b 4096 -f /etc/ssh/ssh_host_rsa_key -N ''
     fi
+}
+
+function checkUsersUpdate() {
+    # Check for new users
+    while [ true ]; do
+        inotifywait -e modify $userConfPath
+        createUsers
+        sleep 1
+    done
+}
+
+# Allow running other programs, e.g. bash
+if [[ -z "$1" || "$1" =~ $reArgsMaybe ]]; then
+    startSshd=true
+else
+    startSshd=false
 fi
+
+createUsers
+checkUsersUpdate &
 
 # Source custom scripts, if any
 if [ -d /etc/sftp.d ]; then
