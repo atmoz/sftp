@@ -24,16 +24,16 @@ else
 fi
 
 # Backward compatibility with legacy config path
-if [ ! -f "$userConfPath" ] && [ -f "$userConfPathLegacy" ]; then
+if [ ! -e "$userConfPath" ] && [ -e "$userConfPathLegacy" ]; then
     mkdir -p "$(dirname $userConfPath)"
     ln -s "$userConfPathLegacy" "$userConfPath"
 fi
 
 # Create users only on first run
-if [ ! -f "$userConfFinalPath" ]; then
+if [ ! -e "$userConfFinalPath" ]; then
     mkdir -p "$(dirname $userConfFinalPath)"
 
-    if [ -f "$userConfPath" ]; then
+    if [ -e "$userConfPath" ]; then
         # Append mounted config to final config
         grep -v -E "$reArgSkip" < "$userConfPath" > "$userConfFinalPath"
     fi
@@ -54,7 +54,7 @@ if [ ! -f "$userConfFinalPath" ]; then
     fi
 
     # Check that we have users in config
-    if [ -f "$userConfFinalPath" ] && [ "$(wc -l < "$userConfFinalPath")" -gt 0 ]; then
+    if [ -e "$userConfFinalPath" ] && [ "$(wc -l < "$userConfFinalPath")" -gt 0 ]; then
         # Import users from final conf file
         while IFS= read -r user || [[ -n "$user" ]]; do
             create-sftp-user "$user"
@@ -65,10 +65,10 @@ if [ ! -f "$userConfFinalPath" ]; then
     fi
 
     # Generate unique ssh keys for this container, if needed
-    if [ ! -f /etc/ssh/ssh_host_ed25519_key ]; then
+    if [ ! -e /etc/ssh/ssh_host_ed25519_key ]; then
         ssh-keygen -t ed25519 -f /etc/ssh/ssh_host_ed25519_key -N ''
     fi
-    if [ ! -f /etc/ssh/ssh_host_rsa_key ]; then
+    if [ ! -e /etc/ssh/ssh_host_rsa_key ]; then
         ssh-keygen -t rsa -b 4096 -f /etc/ssh/ssh_host_rsa_key -N ''
     fi
 fi
