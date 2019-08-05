@@ -17,10 +17,8 @@ RUN  apt-get update \
 
 COPY files/sshd_config /etc/ssh/sshd_config
 COPY files/create-sftp-user /usr/local/bin/
+COPY files/jail.local /etc/fail2ban/
 COPY files/entrypoint /
-
-COPY fail2ban/*.local /etc/fail2ban/
-#COPY filter.d/*.local /etc/fail2ban/filter.d/
 
 EXPOSE 22
 
