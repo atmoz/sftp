@@ -65,6 +65,7 @@ if [ -n "$gid" ]; then
     useraddOptions+=(--gid "$gid")
 fi
 
+log "useradd ${useraddOptions[@]} $user"
 useradd "${useraddOptions[@]}" "$user"
 mkdir -p "/home/$user"
 chown root:root "/home/$user"
@@ -97,9 +98,51 @@ if [ -n "$dir" ]; then
         if [ ! -d "$dirPath" ]; then
             log "Creating directory: $dirPath"
             mkdir -p "$dirPath"
-            chown -R "$uid:#gid" "$dirPath"
+            chown -R "$uid:$gid" "$dirPath"
         else
             log "Directory already exists: $dirPath"
         fi
     done
+fi
+
+###### MODS for bind mounts #####
+# mount user dir
+dataPath="/sftp-data"
+userDataDir="$dataPath/users/$user"
+homeDataDir="/home/$user/data"
+
+# always create a data dir by default in the users home.
+if [ ! -d "$homeDataDir" ]; then
+    log "- mkdir -p $homeDataDir"
+    mkdir -p "$homeDataDir"
+    chown -R "$uid:$gid" "$homeDataDir"
+fi
+#mod user so the data dir is their home
+usermod -d /data "$user"
+
+if [ -d "$dataPath" ]; then
+    log "- has $dataPath"
+    # for users mount the data/users/%u directory
+    if [ "$gid" = "100" ]; then
+        if [ ! -d "$userDataDir" ]; then
+            log "- mkdir -p $userDataDir"
+            mkdir -p "$userDataDir"
+        fi
+        log "- mount --bind $userDataDir $homeDataDir"
+        # Remember permissions, you may have to fix them:
+        # chown -R :100 "$userDataDir"
+        mount --bind "$userDataDir" "$homeDataDir"
+        #make sure permissions are good on users dir
+        chown -R :100 "$dataPath"
+    fi
+    # for sudo (27) admins mount the data directory
+    if [ "$gid" = "27" ] ; then
+        # chown -R :100 "$userDataDir"
+        mount --bind "$dataPath" "$homeDataDir"
+        #also make sure that they are assigned to the user group
+        usermod -g 100 "$user"
+        usermod -a -G 27 "$user"
+    fi
+    chown -R :100 "$dataPath"
+    chmod -R 775 "$dataPath"
 fi
