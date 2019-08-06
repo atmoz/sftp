@@ -1,5 +1,7 @@
 # SFTP
 
+**Forked from atmoz to make it easier to setup on kubernetes. also add fail2ban. merges in PRs to fix a number of issues**
+
 ![Docker Automated build](https://img.shields.io/docker/automated/atmoz/sftp.svg) ![Docker Build Status](https://img.shields.io/docker/build/atmoz/sftp.svg) ![Docker Stars](https://img.shields.io/docker/stars/atmoz/sftp.svg) ![Docker Pulls](https://img.shields.io/docker/pulls/atmoz/sftp.svg)
 
 ![OpenSSH logo](https://raw.githubusercontent.com/atmoz/sftp/master/openssh.png "Powered by OpenSSH")
@@ -34,6 +36,8 @@ This is an automated build linked with the [debian](https://hub.docker.com/_/deb
   - For consistent server fingerprint, mount your own host keys (i.e. `/etc/ssh/ssh_host_*`)
 
 # Examples
+
+to run the example in this project `./examples/docker-run.sh`
 
 ## Simplest docker run example
 
