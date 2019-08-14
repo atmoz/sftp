@@ -54,6 +54,14 @@ docker run \
     foo:pass:1001
 ```
 
+## Changing the home directory of the user
+
+```
+docker run -p 22:22 -d atmoz/sftp foo:pass::::/home/bar
+```
+
+User "foo" with password "pass" will be created with the home directory "/home/bar"
+
 ### Using Docker Compose:
 
 ```
