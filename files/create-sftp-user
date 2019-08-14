@@ -47,6 +47,7 @@ fi
 uid="${args[$((skipIndex+2))]}"; validateArg "UID" "$uid" "$reUid" || exit 1
 gid="${args[$((skipIndex+3))]}"; validateArg "GID" "$gid" "$reGid" || exit 1
 dir="${args[$((skipIndex+4))]}"; validateArg "dirs" "$dir" "$reDir" || exit 1
+home="${args[$((skipIndex+5))]}"; validateArg "home" "$home" "$reDir" || exit 1
 
 if getent passwd "$user" > /dev/null; then
     log "WARNING: User \"$user\" already exists. Skipping."
@@ -65,10 +66,16 @@ if [ -n "$gid" ]; then
     useraddOptions+=(--gid "$gid")
 fi
 
+if [ -n "$home" ]; then
+    useraddOptions+=(--home-dir "$home")
+else
+    home="/home/$user"
+fi
+
 useradd "${useraddOptions[@]}" "$user"
-mkdir -p "/home/$user"
-chown root:root "/home/$user"
-chmod 755 "/home/$user"
+mkdir -p "$home"
+chown root:root "$home"
+chmod 755 "$home"
 
 # Retrieving user id to use it in chown commands instead of the user name
 # to avoid problems on alpine when the user name contains a '.'
@@ -81,19 +88,19 @@ else
 fi
 
 # Add SSH keys to authorized_keys with valid permissions
-if [ -d "/home/$user/.ssh/keys" ]; then
-    for publickey in "/home/$user/.ssh/keys"/*; do
-        cat "$publickey" >> "/home/$user/.ssh/authorized_keys"
+if [ -d "$home/.ssh/keys" ]; then
+    for publickey in "$home/.ssh/keys"/*; do
+        cat "$publickey" >> "$home/.ssh/authorized_keys"
     done
-    chown "$uid" "/home/$user/.ssh/authorized_keys"
-    chmod 600 "/home/$user/.ssh/authorized_keys"
+    chown "$uid" "$home/.ssh/authorized_keys"
+    chmod 600 "$home/.ssh/authorized_keys"
 fi
 
 # Make sure dirs exists
 if [ -n "$dir" ]; then
     IFS=',' read -ra dirArgs <<< "$dir"
     for dirPath in "${dirArgs[@]}"; do
-        dirPath="/home/$user/$dirPath"
+        dirPath="$home/$dirPath"
         if [ ! -d "$dirPath" ]; then
             log "Creating directory: $dirPath"
             mkdir -p "$dirPath"
