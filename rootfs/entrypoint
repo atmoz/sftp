@@ -87,9 +87,10 @@ if [ -d /etc/sftp.d ]; then
 fi
 
 if $startSshd; then
-    log "Executing sshd"
-    exec /usr/sbin/sshd -D -e
+    log "Executing supervisord"
+    mkdir -p /var/log/supervisor
+    /usr/bin/supervisord -c /etc/supervisor/supervisord.conf
 else
-    log "Executing $*"
+    log "Executing custom startup $*"
     exec "$@"
 fi
