@@ -139,6 +139,19 @@ ssh-keygen -t rsa -b 4096 -f ssh_host_rsa_key < /dev/null
 Put your programs in `/etc/sftp.d/` and it will automatically run when the container starts.
 See next section for an example.
 
+## Mount log-files
+
+Login-informations are logged to `/var/log/auth.log` in the container - you can mount the whole dir to your host like: 
+
+```
+mkdir -p log && docker run \
+    -v `pwd`/log:/var/log \
+    --name sftp-with-logs --rm \
+    -p 2222:22 -d atmoz/sftp \
+    foo:bar:1000
+```
+If you use longer running containers (you don't delete and rebuild them regularly) or mount the logs to your host or a persistent volume think about a `logrotate` sidecar container since the logfiles can grow big.
+
 ## Bindmount dirs from another location
 
 If you are using `--volumes-from` or just want to make a custom directory available in user's home directory, you can add a script to `/etc/sftp.d/` that bindmounts after container starts.
