@@ -1,0 +1,16 @@
+kind: Service
+apiVersion: v1
+metadata:
+  name: sftp
+  namespace: sftp
+  labels:
+    ops: sftp
+spec:
+  type: NodePort
+  ports:
+  - name: ssh
+    port: 30022
+    targetPort: 22
+    nodePort: 30022
+  selector:
+    ops: sftp

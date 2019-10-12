@@ -29,7 +29,7 @@ function validateArg() {
     fi
 }
 
-# log "Parsing user data: \"$1\""
+log "Parsing user data: \"$1\""
 IFS=':' read -ra args <<< "$1"
 
 skipIndex=0
@@ -45,7 +45,7 @@ if [ "${args[2]}" == "e" ]; then
 fi
 
 uid="${args[$((skipIndex+2))]}"; validateArg "UID" "$uid" "$reUid" || exit 1
-gid="${args[$((skipIndex+3))]}"; # validateArg "GID" "$gid" "$reGid" || exit 1
+gid="${args[$((skipIndex+3))]}"; validateArg "GID" "$gid" "$reGid" || exit 1
 dir="${args[$((skipIndex+4))]}"; validateArg "dirs" "$dir" "$reDir" || exit 1
 
 if getent passwd "$user" > /dev/null; then
@@ -58,36 +58,15 @@ if [ -n "$uid" ]; then
 fi
 
 if [ -n "$gid" ]; then
-    #if gid = admin then its old ubuntu lingo and new group should be sudo, change it
-    [ "$gid" = "admin" ] && gid="sudo" && log "'admin' group reclassed as 'sudo'. use numeric gid to force admin"
-    # check if it exists
     if ! getent group "$gid" > /dev/null; then
-        log "group $gid does not exists. Creating it"
-        if [[ "$gid" =~ ^[0-9]+$ ]]; then
-            # its a digit
-            groupadd --gid "$gid" "group_$gid"
-        else
-            groupadd "$gid"
-            #gid="$(cut -d: -f3 < <(getent group $gid))"
-        fi
+        groupadd --gid "$gid" "group_$gid"
     fi
-    #ensure we are workign with the id
-    grp_id="$(cut -d: -f3 < <(getent group $gid))"
-    gid=$grp_id
-    #log "group $gid has grp_id $grp_id"
-    # useraddOptions+=(--gid "$gid")
 
-else
-    log "no group specified, defaulting to 100:users"
-    gid=100
+    useraddOptions+=(--gid "$gid")
 fi
-
-useraddOptions+=(--gid "$gid")
 
 log "useradd ${useraddOptions[@]} $user"
 useradd "${useraddOptions[@]}" "$user"
-
-# locked down chroot setup where user's home is owned by root
 mkdir -p "/home/$user"
 chown root:root "/home/$user"
 chmod 755 "/home/$user"
@@ -95,7 +74,6 @@ chmod 755 "/home/$user"
 # Retrieving user id to use it in chown commands instead of the user name
 # to avoid problems on alpine when the user name contains a '.'
 uid="$(id -u "$user")"
-log "uid is $uid"
 
 if [ -n "$pass" ]; then
     echo "$user:$pass" | chpasswd $chpasswdOptions
@@ -125,17 +103,16 @@ if [ -n "$dir" ]; then
             log "Directory already exists: $dirPath"
         fi
     done
+# if dirs are not specified then create a default data one
+else
+
 fi
 
-###### MODS for bind mounts #####
-
-# if DATA_DIR_NAME env is not set then make data the default
-: ${DATA_MOUNT_NAME:=data}
+###### MODS for shared sftp-data bind mounts #####
 # mount user dir
-dataPath="/data"
-usersDir="$dataPath/users"
-userDataDir="$usersDir/$user"
-homeDataDir="/home/$user/$DATA_MOUNT_NAME"
+sftpDataPath="/sftp-data"
+userDataDir="$dataPath/users/$user"
+homeDataMount="/home/$user/data"
 
 # always create a data dir by default in the users home.
 if [ ! -d "$homeDataDir" ]; then
@@ -144,39 +121,56 @@ if [ ! -d "$homeDataDir" ]; then
     chown -R "$uid:$gid" "$homeDataDir"
 fi
 #mod user so the data dir is their home
-usermod -d "$homeDataDir" "$user"
+usermod -d /data "$user"
 
 #if the data path has been mapped in as volume then it will exists and do our special logic
 if [ -d "$dataPath" ]; then
-    log "data path has been mapped in as a volume"
-    # create users dir
-    if [ ! -d "$usersDir" ]; then
-        log "- no $usersDir so exec: mkdir -p $usersDir"
-        mkdir -p "$usersDir"
-        chown :sudo "$usersDir"
-        chmod 775 "$usersDir"
-    fi
+    log "- has $dataPath"
+    #ensure main dataPath is owned by users (100) group and has good perimssions
+    #chown :users "$dataPath"
+    #chmod 775 "$dataPath"
 
-    # create users data dir
     if [ ! -d "$userDataDir" ]; then
         log "- mkdir -p $userDataDir"
         mkdir -p "$userDataDir"
-        chown $user:users "$userDataDir"
-        chmod 775 "$userDataDir"
     fi
 
-    # for users mount the ($userDataDir) directory
-    if [ "$gid" = "100" ] || [ "$gid" = "users" ]; then
+    log "- mount --bind $userDataDir $homeDataDir"
+    # Remember permissions, you may have to fix them:
+    # chown -R :100 "$userDataDir"
+    mount --bind "$userDataDir" "$homeDataDir"
+    #make sure permissions are good on users dir
+    chown -R :users "$userDataDir"
+
+    # for users mount the data/users/%u directory
+    if [ "$gid" = "100" ]; then
+        if [ ! -d "$userDataDir" ]; then
+            log "- mkdir -p $userDataDir"
+            mkdir -p "$userDataDir"
+        fi
         log "- mount --bind $userDataDir $homeDataDir"
+        # Remember permissions, you may have to fix them:
+        # chown -R :100 "$userDataDir"
         mount --bind "$userDataDir" "$homeDataDir"
+        #make sure permissions are good on users dir
+        chown -R :users "$userDataDir"
     fi
-    # for (27) sudo/admins mount the data directory
-    if [ "$gid" = "27" ] || [ "$gid" = "sudo" ]; then
+    # for sudo (27) admins mount the data directory
+    if [ "$gid" = "27" ] ; then
         # chown -R :100 "$userDataDir"
         mount --bind "$dataPath" "$homeDataDir"
-        #also make sure that sudo/admins are assigned to the users group
+        #also make sure that sudo admins are assigned to the user group
         usermod -g users "$user"
         usermod -a -G 27 "$user"
     fi
+    #chown -R :100 "$dataPath"
+    #chmod -R 775 "$dataPath"
 fi
 
+# Source custom scripts, if any
+if [ -x /etc/sftp/user-setup.sh ]; then
+    log "Running user-setup.sh ..."
+
+    /etc/sftp/user-setup.sh "$user" "$uid" "$gid"
+
+fi
