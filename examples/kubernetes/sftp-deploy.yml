@@ -15,7 +15,6 @@ spec:
     spec:
       #secrets and config
       volumes:
-
       # NFS example, can be a PVC as well
       # - name: sftp-data
       #   nfs:
@@ -67,7 +66,7 @@ spec:
         - mountPath: /etc/sftp/users.conf
           name: sftp-user-conf
           subPath: users.conf
-        - mountPath: /etc/sftp-keys.d
+        - mountPath: /etc/sftp/authorized_keys.d
           name: sftp-user-keys
         - mountPath: /data
           name: sftp-data
