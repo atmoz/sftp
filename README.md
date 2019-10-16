@@ -8,8 +8,8 @@
 
 ## Supported tags and respective `Dockerfile` links
 
-- [`debian`, `latest` (*Dockerfile*)](https://github.com/yakworks/docker-sftp/blob/master/Dockerfile) [![](https://images.microbadger.com/badges/image/yakworks/sftp.svg)](http://microbadger.com/images/yakworks/sftp "Get your own image badge on microbadger.com")
-
+- [`debian`, `latest` (*Dockerfile*)](https://github.com/yakworks/docker-sftp/blob/master/Dockerfile) [![](https://images.microbadger.com/badges/version/yakworks/sftp.svg)](https://microbadger.com/images/yakworks/sftp "Get your own version badge on microbadger.com")
+[![](https://images.microbadger.com/badges/image/yakworks/sftp.svg)](https://microbadger.com/images/yakworks/sftp "Get your own image badge on microbadger.com")
 ## Securely share your files
 
 Easy to use SFTP ([SSH File Transfer Protocol](https://en.wikipedia.org/wiki/SSH_File_Transfer_Protocol)) server with [OpenSSH](https://en.wikipedia.org/wiki/OpenSSH).

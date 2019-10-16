@@ -1,4 +1,9 @@
 FROM debian:buster-slim
+MAINTAINER Joshua Burnett [yakworks.org]
+
+ARG VCS_REF
+LABEL org.label-schema.vcs-ref=$VCS_REF \
+      org.label-schema.vcs-url="https://github.com/yakworks/docker-sftp"
 
 # Steps done in one RUN layer:
 # - Install packages
