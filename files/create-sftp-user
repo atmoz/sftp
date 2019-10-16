@@ -58,8 +58,8 @@ if [ -n "$uid" ]; then
 fi
 
 if [ -n "$gid" ]; then
-    #if gid = admin then its old ubuntu lingo and new group should be sudo, change it
-    [ "$gid" = "admin" ] && gid="sudo" && log "'admin' group reclassed as 'sudo'. use numeric gid to force admin"
+    [ "$gid" = "owner" ] && gid="staff"
+    
     # check if it exists
     if ! getent group "$gid" > /dev/null; then
         log "group $gid does not exists. Creating it"
@@ -153,7 +153,7 @@ if [ -d "$dataPath" ]; then
     if [ ! -d "$usersDir" ]; then
         log "- no $usersDir so exec: mkdir -p $usersDir"
         mkdir -p "$usersDir"
-        chown :sudo "$usersDir"
+        chown :staff "$usersDir"
         chmod 775 "$usersDir"
     fi
 
@@ -170,13 +170,13 @@ if [ -d "$dataPath" ]; then
         log "- mount --bind $userDataDir $homeDataDir"
         mount --bind "$userDataDir" "$homeDataDir"
     fi
-    # for (27) sudo/admins mount the data directory
-    if [ "$gid" = "27" ] || [ "$gid" = "sudo" ]; then
+    # for (50) staff/admins mount the data directory
+    if [ "$gid" = "50" ] || [ "$gid" = "staff" ]; then
         # chown -R :100 "$userDataDir"
         mount --bind "$dataPath" "$homeDataDir"
         #also make sure that sudo/admins are assigned to the users group
         usermod -g users "$user"
-        usermod -a -G 27 "$user"
+        usermod -a -G 50 "$user"
     fi
 fi
 

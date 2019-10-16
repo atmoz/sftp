@@ -5,6 +5,8 @@
 # docker build -t yakworks/sftp .
 docker stop sftp || true && docker rm sftp || true
 
+mkdir -p examples/sftp-data
+
 docker run --name sftp --cap-add=SYS_ADMIN --cap-add=NET_ADMIN \
   -p 30022:22 \
   -e DATA_MOUNT_NAME=ninebox \

@@ -53,6 +53,9 @@ if [ ! -e "$userConfFinalPath" ]; then
         done
     fi
 
+    #make sure staff group exists
+    groupadd --gid "50" "staff" || true
+
     # Check that we have users in config
     if [ -e "$userConfFinalPath" ] && [ "$(wc -l < "$userConfFinalPath")" -gt 0 ]; then
         # Import users from final conf file
