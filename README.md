@@ -16,23 +16,27 @@ merges in a number of PRs to fix a number of issues
 <!-- TOC depthfrom:2 -->
 
 - [Supported tags and respective `Dockerfile` links](#supported-tags-and-respective-dockerfile-links)
-- [Example Quickstart](#example-quickstart)
+- [Quickstart Example](#quickstart-example)
 - [Summary](#summary)
     - [Simplest docker run example](#simplest-docker-run-example)
 - [Volume `data` mount](#volume-data-mount)
-    - [Examples](#examples)
-- [User File - users.conf](#user-file---usersconf)
-- [Encrypted passwords](#encrypted-passwords)
-- [Logging in with SSH keys](#logging-in-with-ssh-keys)
-- [Providing your own SSH host key (recommended)](#providing-your-own-ssh-host-key-recommended)
+    - [Data Volume Examples](#data-volume-examples)
+- [User Credentials](#user-credentials)
+    - [users.conf](#usersconf)
+    - [Encrypted passwords](#encrypted-passwords)
+    - [User SSH pub keys](#user-ssh-pub-keys)
+- [Providing server SSH host keys (recommended)](#providing-server-ssh-host-keys-recommended)
 - [Execute custom scripts or applications](#execute-custom-scripts-or-applications)
 - [Bindmount dirs from another location](#bindmount-dirs-from-another-location)
+- [Kubernetes](#kubernetes)
+    - [Install process](#install-process)
+    - [Maintain Users](#maintain-users)
 
 <!-- /TOC -->
 ## Supported tags and respective `Dockerfile` links
 
-- [`debian`, `latest` (*Dockerfile*)](https://github.com/yakworks/docker-sftp/blob/master/Dockerfile) [![](https://images.microbadger.com/badges/version/yakworks/sftp.svg)](https://microbadger.com/images/yakworks/sftp "Get your own version badge on microbadger.com")
-[![](https://images.microbadger.com/badges/image/yakworks/sftp.svg)](https://microbadger.com/images/yakworks/sftp "Get your own image badge on microbadger.com")
+- debian:buster-slim [`latest` (*Dockerfile*)](https://github.com/yakworks/docker-sftp/blob/master/Dockerfile) FROM  
+[![](https://img.shields.io/badge/60%20MB-14%20Layers-green?style=for-the-badge)](https://hub.docker.com/r/yakworks/sftp/tags)
 
 **Securely share your files**
 
@@ -40,9 +44,10 @@ Easy to use SFTP ([SSH File Transfer Protocol](https://en.wikipedia.org/wiki/SSH
 This is an automated build linked with the [debian](https://hub.docker.com/_/debian/) repositories.
 
 
-## Example Quickstart
+## Quickstart Example 
 
-to run the opionionated example in this project `./examples/docker-run.sh`
+To run the opionionated example in this project `./examples/docker/docker-run.sh`
+See README there for more info
 
 ## Summary
 
@@ -83,38 +88,42 @@ NOTE: in this example Fail2Ban will probably fail as it needs the NET_ADMIN capa
 
 ## Volume `data` mount
 
-Opinionated permission defaults 
+Opinionated permission defaults. This sets users and groups in a number of ways that attempt to make sharing files
+cleaner across multiple users
 
 - if the data volume is mounted then it will create `/data/users/:user` for each user under it
 - **staff/owner group**: a `staff` or `50` group is considered an owner, ex:`foo:pass::staff`.
-  They will have `/data` link mounted to their `/home/:user/data` and will have full rw access to the whole dir.
+  - staff will have `/data` link mounted to their `/home/:user/data` and will have full rw access to the whole dir.
+  - staff will have primary group of `users` and will also have staff group as secondary
 - **users group**: a `users` or `100` group is considered limited in visibility, ex:`foo:pass::user`
-  They will have the `/data/users/:user` link mounted to `/home/:user/data` and will be limitd to that dir
+  - `users` will have the `/data/users/:user` link mounted to `/home/:user/data` and will be limitd to that dir
 - `--cap-add=SYS_ADMIN` is needed for the mounting. see kubernetes example for adding securityContext.capabilities
-- set the DATA_MOUNT_NAME env can be set to change the name from `data`.  
+- set the `DATA_MOUNT_NAME` env can be set to change the name from `data`.  
 
-### Examples
+### Data Volume Examples
 
 Let's mount a directory and make a user and staf owner with UIDs as well. 
 
 ```
-mkdir -p target/onebox-sftp
+mkdir -p target/yakbox-sftp
 
 docker run --cap-add=NET_ADMIN --cap-add=SYS_ADMIN \
-  -e DATA_MOUNT_NAME=onebox \
-  -v $(pwd)/target/onebox-sftp:/data \
+  -e DATA_MOUNT_NAME=yakbox \
+  -v $(pwd)/target/yakbox-sftp:/data \
   -p 2222:22 -d yakworks/sftp \
   owner1:pass::staff user1:pass::users
 ```
 
-In this example when they owner1 user sftp's in they will have a `onebox` dir that is essentially mapped to the 
-`target/onebox-sftp` dir via the `data` share. 
-The user1 will end up having a `target/onebox-sftp/users/user1` dir created for them and they will also see a
-`onebox` dir when stping that is mapped and restricted to that dir. 
+In this example when they owner1 user sftp's in they will have a `yakbox` dir that is essentially mapped to the 
+`target/yakbox-sftp` dir via the `data` share. 
+The user1 will end up having a `target/yakbox-sftp/users/user1` dir created for them and they will also see a
+`yakbox` dir when stping that is mapped and restricted to that dir. 
 
 Go ahead and try out fail2ban. enter 5 bad logins and see what happens. 
 
-## User File - users.conf
+## User Credentials
+
+### users.conf
 
 ```
 echo "
@@ -133,12 +142,12 @@ note: 100 is the `users` group so either id will work or name
 
 In this example it will create 
 
-## Encrypted passwords
+### Encrypted passwords
 
 Add `:e` behind password to mark it as encrypted. Use single quotes if using terminal.
 
 ```
-docker run \
+docker run --cap-add=NET_ADMIN --cap-add=SYS_ADMIN \
     -v /host/share:/home/foo/share \
     -p 2222:22 -d yakworks/sftp \
     'foo:$1$0G2g0GSt$ewU0t6GXG15.0hWoOX8X9.:e:1001'
@@ -147,12 +156,14 @@ docker run \
 Tip: you can use [atmoz/makepasswd](https://hub.docker.com/r/atmoz/makepasswd/) to generate encrypted passwords:  
 `echo -n "your-password" | docker run -i --rm atmoz/makepasswd --crypt-md5 --clearfrom=-`
 
-## Logging in with SSH keys
+### User SSH pub keys
+
+**Option 1 - volume mapping each user key**
 
 Mount public keys in the user's `.ssh/keys/` directory. All keys are automatically appended to `.ssh/authorized_keys` (you can't mount this file directly, because OpenSSH requires limited file permissions). In this example, we do not provide any password, so the user `foo` can only login with his SSH key.
 
 ```
-docker run \
+docker run --cap-add=NET_ADMIN --cap-add=SYS_ADMIN \
     -v /host/id_rsa.pub:/home/foo/.ssh/keys/id_rsa.pub:ro \
     -v /host/id_other.pub:/home/foo/.ssh/keys/id_other.pub:ro \
     -v /host/share:/home/foo/share \
@@ -160,7 +171,22 @@ docker run \
     foo::1001
 ```
 
-## Providing your own SSH host key (recommended)
+**Option 2 - mapping volume with all keys**
+
+This is best option for kubernetes as you can easily create a secret configmap with each users public key and map to that secret as a volume
+create a volume mapping to `/etc/sftp-keys.d`. On start the container will spin through all pub files in that directory and add automatically appended to `.ssh/authorized_keys`. format should be `:user_rsa.pub`. 
+For example, if you have a directory called secure/ssh-user-keys with the key files `ziggy_rsa.pub` and `bob_rsa.pub`
+
+```
+docker run --cap-add=NET_ADMIN --cap-add=SYS_ADMIN \
+    -v secure/ssh-user-keys:/etc/sftp-keys.d \
+    -p 2222:22 -d atmoz/sftp \
+    ziggy::1001 bob::1002
+```
+
+The `examples/docker` shows this in action
+
+## Providing server SSH host keys (recommended)
 
 For consistent server fingerprint, mount your own host keys (i.e. `/etc/ssh/ssh_host_*`)
 
@@ -180,6 +206,15 @@ Tip: you can generate your keys with these commands:
 ```
 ssh-keygen -t ed25519 -f ssh_host_ed25519_key < /dev/null
 ssh-keygen -t rsa -b 4096 -f ssh_host_rsa_key < /dev/null
+```
+
+or using this docker image itself
+
+```
+mkdir keys
+# runs the image and copies the keys out to use then exits
+docker run -it --rm -v $(pwd):/workdir yakworks/sftp \
+cp /etc/ssh/ssh_host_ed25519_key* /etc/ssh/ssh_host_rsa_key* /workdir/keys
 ```
 
 ## Execute custom scripts or applications
@@ -220,3 +255,36 @@ bindmount /data/docs /home/peter/docs --read-only
 ```
 
 **NOTE:** Using `mount` requires that your container runs with the `CAP_SYS_ADMIN` capability turned on. [See this answer for more information](https://github.com/atmoz/sftp/issues/60#issuecomment-332909232).
+
+## Kubernetes
+
+See the example in kubernetes dir [examples/kubernetes/README.md](examples/kubernetes/README.md)
+
+One way to keep this straight forward is to map secrets and their keys as volume files. 
+Then users and the ssh keys can be mapped per the examples
+
+### Install process
+
+1. run `./keygen.sh`. take a look at script for what it does but gens keys and copies the secret-*.yml fiels into keys dir for editing. the keys dir should be in .gitignore and should not be checked in to github. 
+
+2. Edit secret-host-keys.yml and copy in the keys that were generated into the the dir.
+
+3. Edit secret-user-conf.yml to add or update users and set to initial secure passwords. 
+
+    >NOTE: UPDATE THE pAsWoRd to something secure, DO NOT RUN IT AS IS! This is just a githuib checked in example
+
+4. Run the `./install.sh` script or look inside it and run each item by hand. 
+
+    >NOTE: the end of the install script will delete the keys dir so keep that in mind!
+
+5. if you have a botched run and need to clean up then run
+    ```
+    kubectl delete deployment,svc,configmap,secret --namespace=storage --selector=role=sftp
+    ```
+
+6. add a tcp entry to the Linode node balancer to pass 30022 to the nodes 30022. Add an entry to the DNS to point sftp.9ci.com to that nodebalancer
+
+
+### Maintain Users
+
+To add or remove users just edit the sftp-user-conf secret. Easy to do in Rancher. Will need to redeploy ("restart") the  deployment

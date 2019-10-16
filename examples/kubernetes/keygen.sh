@@ -1,4 +1,7 @@
 #!/bin/bash
+# exit when any command fails
+set -e
+
 mkdir keys
 # runs the image and copies the keys out to use
 docker run -it --rm -v $(pwd):/workdir yakworks/sftp \

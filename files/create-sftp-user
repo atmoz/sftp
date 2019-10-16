@@ -105,11 +105,37 @@ fi
 
 # Add SSH keys to authorized_keys with valid permissions
 if [ -d "/home/$user/.ssh/keys" ]; then
+    mkdir -p /home/$user/.ssh
     for publickey in "/home/$user/.ssh/keys"/*; do
         (cat "${publickey}"; echo) >> "/home/$user/.ssh/authorized_keys"
     done
+fi
+
+# Add SSH keys from mapped dir, files should be in format $user_rsa.pub
+if [ -d "/etc/sftp-keys.d" ]; then
+    for keyFile in "/etc/sftp-keys.d"/*.pub; do
+        #The guard ensures that if there are no matching files, the loop will exit without trying to process a non-existent file
+        [ -f "$keyFile" ] || break
+        baseFile=$(basename $keyFile)
+        #if it does not have a _ char then continue
+        [[ $baseFile != *_* ]] && continue
+        # strip everything from beginning to first occurrence of '_'
+        userName="${baseFile%%_*}"
+        # log "${keyFile} has $userName while processing $user"
+        if [ "$userName" = "$user" ]; then
+            mkdir -p /home/$user/.ssh
+            log "adding ${keyFile} to /home/$user/.ssh/authorized_keys"
+            (cat "${keyFile}"; echo) >> "/home/$user/.ssh/authorized_keys"
+        fi
+    done
+fi
+
+if [ -e "/home/$user/.ssh/authorized_keys" ]; then
+    log "set proper permissions on /home/$user/.ssh/authorized_keys"
+    chown "$uid" "/home/$user/.ssh"
+    chmod 700 "/home/$user/.ssh"
     chown "$uid" "/home/$user/.ssh/authorized_keys"
-    chmod 600 "/home/$user/.ssh/authorized_keys"
+    chmod 644 "/home/$user/.ssh/authorized_keys"
 fi
 
 # Make sure dirs exists
@@ -144,7 +170,7 @@ if [ ! -d "$homeDataDir" ]; then
     chown -R "$uid:$gid" "$homeDataDir"
 fi
 #mod user so the data dir is their home
-usermod -d "$homeDataDir" "$user"
+#usermod -d "$homeDataDir" "$user"
 
 #if the data path has been mapped in as volume then it will exists and do our special logic
 if [ -d "$dataPath" ]; then

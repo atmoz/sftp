@@ -23,7 +23,7 @@ ForceCommand internal-sftp -u 0002 -f AUTH -l VERBOSE
 ChrootDirectory /home/%u
 
 # Match Group users
-#  ChrootDirectory %h
+# ChrootDirectory %h
 
 # Enable this for more logs
 LogLevel VERBOSE

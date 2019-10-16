@@ -2,9 +2,8 @@ kind: Service
 apiVersion: v1
 metadata:
   name: sftp
-  namespace: sftp
   labels:
-    ops: sftp
+    role: sftp
 spec:
   type: NodePort
   ports:

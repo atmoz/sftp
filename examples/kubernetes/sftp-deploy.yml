@@ -2,23 +2,32 @@ kind: Deployment
 apiVersion: apps/v1beta2
 metadata:
   name: sftp
-  namespace: sftp
   labels:
-    ops: sftp
+    role: sftp
 spec:
-  # how many pods and indicate which strategy we want for rolling update
-  replicas: 1
-  minReadySeconds: 10
   selector:
     matchLabels:
-      ops: sftp
+      role: sftp
   template:
     metadata:
       labels:
-        ops: sftp
+        role: sftp
     spec:
       #secrets and config
       volumes:
+
+      # NFS example, can be a PVC as well
+      # - name: sftp-data
+      #   nfs:
+      #     # TODO: See README for why name won't work here and why IP is needed
+      #     server: 10.43.1.123
+      #     path: "/"
+
+      #Simple host path example
+      - name: sftp-data
+        hostPath:
+          path: "/sftp-data"
+          type: DirectoryOrCreate
       - name: sftp-host-keys
         secret:
           secretName: sftp-host-keys
@@ -27,45 +36,32 @@ spec:
         secret:
           secretName: sftp-user-conf
           defaultMode: 0600
-      - name: sftp-data-vol
-        persistentVolumeClaim:
-          claimName: sftp-data-vol
-      # - name: sftp-data
-      #   hostPath:
-      #     path: "/sftp-data"
-      #     type: DirectoryOrCreate
       containers:
       #the sftp server itself
       - name: sftp
         image: yakworks/sftp:latest
         imagePullPolicy: Always
+        env:
+          - name: DATA_MOUNT_NAME
+            value: yakbox
         ports:
-        - containerPort: 22
+          - containerPort: 22
         securityContext:
-          privileged: true
+          # privileged=true is nuclear approach if capabilities is not working
+          # privileged: true
           capabilities:
-            add: ["SYS_ADMIN"]
+            add: ["SYS_ADMIN", "NET_ADMIN"]
         volumeMounts:
         - mountPath: /etc/ssh/ssh_host_ed25519_key
           name: sftp-host-keys
           subPath: ssh_host_ed25519_key
           readOnly: true
-        - mountPath: /etc/ssh/ssh_host_ed25519_key.pub
-          name: sftp-host-keys
-          subPath: ssh_host_ed25519_key.pub
-          readOnly: true
         - mountPath: /etc/ssh/ssh_host_rsa_key
           name: sftp-host-keys
           subPath: ssh_host_rsa_key
-          readOnly: true
-        - mountPath: /etc/ssh/ssh_host_rsa_key.pub
-          name: sftp-host-keys
-          subPath: ssh_host_rsa_key.pub
           readOnly: true
         - mountPath: /etc/sftp/users.conf
           name: sftp-user-conf
           subPath: users.conf
         - mountPath: /data
-          name: sftp-data-vol
-        # - mountPath: /data
-        #   name: sftp-data
+          name: sftp-data
