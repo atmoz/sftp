@@ -91,10 +91,13 @@ touch /var/log/auth.log
 service fail2ban start
 
 if $startSshd; then
-    log "Executing sshd"
-    exec /usr/sbin/sshd -D -e
-    tail -f /var/log/auth.log
+    #log "Executing sshd"
+    #exec /usr/sbin/sshd -D -e
+    #tail -f /var/log/auth.log
+    log "Executing supervisord with sshd"
+    mkdir -p /var/log/supervisor
+    /usr/bin/supervisord -c /etc/supervisor/supervisord.conf
 else
-    log "Executing $*"
+    log "Executing custom startup $*"
     exec "$@"
 fi

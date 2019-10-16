@@ -1,5 +1,7 @@
 # Secure defaults
 # See: https://stribika.github.io/2015/01/04/secure-secure-shell.html
+MaxAuthTries 6
+
 Protocol 2
 HostKey /etc/ssh/ssh_host_ed25519_key
 HostKey /etc/ssh/ssh_host_rsa_key
@@ -14,8 +16,9 @@ X11Forwarding no
 AllowTcpForwarding no
 
 # Force sftp and chroot jail
-Subsystem sftp internal-sftp
-ForceCommand internal-sftp -u 0002 # umask for user|group rwx|rwx permisions 
+Subsystem sftp internal-sftp -f AUTH -l VERBOSE
+# umask for user|group rwx|rwx permisions 
+ForceCommand internal-sftp -u 0002 -f AUTH -l VERBOSE
 
 ChrootDirectory /home/%u
 
@@ -23,4 +26,4 @@ ChrootDirectory /home/%u
 #  ChrootDirectory %h
 
 # Enable this for more logs
-#LogLevel VERBOSE
+LogLevel VERBOSE

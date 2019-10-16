@@ -1,3 +1,5 @@
 [DEFAULT]
 # fail2ban bantime is the total number of seconds that a host is banned
-bantime = 3600
+bantime = 600
+#I think we want this to be 1 less than the sshd_config so its picked up and banned
+maxretry = 6
