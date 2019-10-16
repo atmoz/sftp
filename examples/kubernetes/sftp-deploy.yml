@@ -32,6 +32,10 @@ spec:
         secret:
           secretName: sftp-host-keys
           defaultMode: 0600
+      - name: sftp-user-keys
+        secret:
+          secretName: sftp-user-keys
+          defaultMode: 0600
       - name: sftp-user-conf
         secret:
           secretName: sftp-user-conf
@@ -63,5 +67,7 @@ spec:
         - mountPath: /etc/sftp/users.conf
           name: sftp-user-conf
           subPath: users.conf
+        - mountPath: /etc/sftp-keys.d
+          name: sftp-user-keys
         - mountPath: /data
           name: sftp-data

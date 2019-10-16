@@ -112,8 +112,8 @@ if [ -d "/home/$user/.ssh/keys" ]; then
 fi
 
 # Add SSH keys from mapped dir, files should be in format $user_rsa.pub
-if [ -d "/etc/sftp-keys.d" ]; then
-    for keyFile in "/etc/sftp-keys.d"/*.pub; do
+if [ -d "/etc/sftp/authorized_keys.d" ]; then
+    for keyFile in "/etc/sftp/authorized_keys.d"/*.pub; do
         #The guard ensures that if there are no matching files, the loop will exit without trying to process a non-existent file
         [ -f "$keyFile" ] || break
         baseFile=$(basename $keyFile)

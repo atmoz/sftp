@@ -174,12 +174,12 @@ docker run --cap-add=NET_ADMIN --cap-add=SYS_ADMIN \
 **Option 2 - mapping volume with all keys**
 
 This is best option for kubernetes as you can easily create a secret configmap with each users public key and map to that secret as a volume
-create a volume mapping to `/etc/sftp-keys.d`. On start the container will spin through all pub files in that directory and add automatically appended to `.ssh/authorized_keys`. format should be `:user_rsa.pub`. 
+create a volume mapping to `/etc/sftp/authorized_keys.d`. On start the container will spin through all pub files in that directory and add automatically appended to `/home/:user/.ssh/authorized_keys`. format should be `:user_rsa.pub`. 
 For example, if you have a directory called secure/ssh-user-keys with the key files `ziggy_rsa.pub` and `bob_rsa.pub`
 
 ```
 docker run --cap-add=NET_ADMIN --cap-add=SYS_ADMIN \
-    -v secure/ssh-user-keys:/etc/sftp-keys.d \
+    -v secure/ssh-user-keys:/etc/sftp/authorized_keys.d \
     -p 2222:22 -d atmoz/sftp \
     ziggy::1001 bob::1002
 ```
