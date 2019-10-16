@@ -4,7 +4,7 @@ Forked from atmoz to make it easier to setup on kubernetes and share a volume to
 adds fail2ban from [this pr](https://github.com/atmoz/sftp/pull/189). 
 merges in a number of PRs to fix a number of issues
 
-![Docker Automated build](https://img.shields.io/docker/cloud/automated/yakworks/sftp.svg) ![Docker Build Status](https://img.shields.io/docker/cloud/build/yakworks/sftp.svg) ![Docker Stars](https://img.shields.io/docker/stars/yakworks/sftp.svg) ![Docker Pulls](https://img.shields.io/docker/pulls/yakworks/sftp.svg)
+![Docker Cloud Build Status](https://img.shields.io/docker/cloud/build/yakworks/sftp?style=for-the-badge) ![Docker Cloud Automated build](https://img.shields.io/docker/cloud/automated/yakworks/sftp?style=for-the-badge) ![Docker Pulls](https://img.shields.io/docker/pulls/yakworks/sftp?style=for-the-badge) [![forthebadge](https://forthebadge.com/images/badges/gluten-free.svg)](https://forthebadge.com) 
 
 <img src="docs/openssh.png"
 	title="A cute kitten" height="80" />
