@@ -4,7 +4,7 @@ Forked from atmoz to make it easier to setup on kubernetes and share a volume to
 adds fail2ban from [this pr](https://github.com/atmoz/sftp/pull/189). 
 merges in a number of PRs to fix a number of issues
 
-![Docker Cloud Build Status](https://img.shields.io/docker/cloud/build/yakworks/sftp?style=for-the-badge) ![Docker Cloud Automated build](https://img.shields.io/docker/cloud/automated/yakworks/sftp?style=for-the-badge) ![Docker Pulls](https://img.shields.io/docker/pulls/yakworks/sftp?style=for-the-badge) [![forthebadge](https://forthebadge.com/images/badges/gluten-free.svg)](https://forthebadge.com) 
+![Docker Cloud Build Status](https://img.shields.io/docker/cloud/build/yakworks/sftp?style=for-the-badge&logo=docker) ![Docker Cloud Automated build](https://img.shields.io/docker/cloud/automated/yakworks/sftp?style=for-the-badge&logo=docker) ![Docker Pulls](https://img.shields.io/docker/pulls/yakworks/sftp?style=for-the-badge&logo=docker) [![forthebadge](https://forthebadge.com/images/badges/gluten-free.svg)](https://forthebadge.com) 
 
 <img src="docs/openssh.png"
 	title="A cute kitten" height="80" />
@@ -35,7 +35,7 @@ merges in a number of PRs to fix a number of issues
 <!-- /TOC -->
 ## Supported tags and respective `Dockerfile` links
 
-- debian:buster-slim [`latest` (*Dockerfile*)](https://github.com/yakworks/docker-sftp/blob/master/Dockerfile) [![](https://img.shields.io/badge/60%20MB-14%20Layers-green?style=for-the-badge)](https://hub.docker.com/r/yakworks/sftp/tags)
+- debian:buster-slim [`latest` (*Dockerfile*)](https://github.com/yakworks/docker-sftp/blob/master/Dockerfile) [![](https://img.shields.io/badge/60%20MB-14%20Layers-green?style=for-the-badge&logo=docker)](https://hub.docker.com/r/yakworks/sftp/tags)
 
 **Securely share your files**
 
