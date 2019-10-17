@@ -6,18 +6,16 @@ cd examples/docker
 # docker build -t yakworks/sftp .
 docker stop sftp || true && docker rm sftp || true
 
-mkdir -p sftp-data
-
 # --cap-add=SYS_ADMIN is for the mounts
 # --cap-add=NET_ADMIN is for fail2ban iptables
 docker run --name sftp --cap-add=SYS_ADMIN --cap-add=NET_ADMIN \
   -p 30022:22 \
-  -e DATA_MOUNT_NAME=ninebox \
+  -e DATA_MOUNT=/sftp-data \
+  -v $(pwd)/sftp-vol:/sftp-data \
   -v $(pwd)/users.conf:/etc/sftp/users.conf \
   -v $(pwd)/user-keys:/etc/sftp/authorized_keys.d \
   -v $(pwd)/server-keys/ssh_host_ed25519_key:/etc/ssh/ssh_host_ed25519_key \
   -v $(pwd)/server-keys/ssh_host_rsa_key:/etc/ssh/ssh_host_rsa_key \
-  -v $(pwd)/sftp-data:/data \
   -d yakworks/sftp
 
   # pub keys don't seem to be needed?

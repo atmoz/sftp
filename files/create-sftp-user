@@ -138,52 +138,36 @@ if [ -e "/home/$user/.ssh/authorized_keys" ]; then
     chmod 644 "/home/$user/.ssh/authorized_keys"
 fi
 
-# Make sure dirs exists
-if [ -n "$dir" ]; then
-    IFS=',' read -ra dirArgs <<< "$dir"
-    for dirPath in "${dirArgs[@]}"; do
-        dirPath="/home/$user/$dirPath"
-        if [ ! -d "$dirPath" ]; then
-            log "Creating directory: $dirPath"
-            mkdir -p "$dirPath"
-            chown -R "$uid:$gid" "$dirPath"
-        else
-            log "Directory already exists: $dirPath"
-        fi
-    done
-fi
-
-###### MODS for bind mounts #####
-
-# if DATA_DIR_NAME env is not set then make data the default
-: ${DATA_MOUNT_NAME:=data}
-# mount user dir
-dataPath="/data"
-usersDir="$dataPath/users"
-userDataDir="$usersDir/$user"
-homeDataDir="/home/$user/$DATA_MOUNT_NAME"
+# do default home mount that user can read/write to. Chroot does not allow writing to normal home
+: ${HOME_MOUNT_NAME:=home}
+homeMountDir="/home/$user/$HOME_MOUNT_NAME"
 
 # always create a data dir by default in the users home.
-if [ ! -d "$homeDataDir" ]; then
-    log "- mkdir -p $homeDataDir"
-    mkdir -p "$homeDataDir"
-    chown -R "$uid:$gid" "$homeDataDir"
+if [ ! -d "$homeMountDir" ]; then
+    log "- mkdir -p $homeMountDir"
+    mkdir -p "$homeMountDir"
+    chown -R "$uid:$gid" "$homeMountDir"
 fi
-#mod user so the data dir is their home
-#usermod -d "$homeDataDir" "$user"
 
-#if the data path has been mapped in as volume then it will exists and do our special logic
-if [ -d "$dataPath" ]; then
+### do the special DATA_MOUNT logic
+
+# if DATA_MOUNT is set and dir exists 
+if [ "$DATA_MOUNT" ] && [ -d "$DATA_MOUNT" ]; then
+    hasDataMount=true
+    dataHomeDir="$DATA_MOUNT/home"
+    userDataDir="$dataHomeDir/$user"
+    dataMountDir="/home/$user/$DATA_MOUNT"
+
     log "data path has been mapped in as a volume"
-    # create users dir
-    if [ ! -d "$usersDir" ]; then
-        log "- no $usersDir so exec: mkdir -p $usersDir"
-        mkdir -p "$usersDir"
-        chown :staff "$usersDir"
-        chmod 775 "$usersDir"
+    # create home dir in data
+    if [ ! -d "$dataHomeDir" ]; then
+        log "- no $dataHomeDir so exec: mkdir -p $dataHomeDir"
+        mkdir -p "$dataHomeDir"
+        chown :staff "$dataHomeDir"
+        chmod 775 "$dataHomeDir"
     fi
 
-    # create users data dir
+    # create users in data home dir if its not there
     if [ ! -d "$userDataDir" ]; then
         log "- mkdir -p $userDataDir"
         mkdir -p "$userDataDir"
@@ -191,18 +175,45 @@ if [ -d "$dataPath" ]; then
         chmod 775 "$userDataDir"
     fi
 
+    # mount the home/:user dir
+    log "- mount --bind $userDataDir $homeMountDir"
+    mount --bind "$userDataDir" "$homeMountDir"
+
     # for users mount the ($userDataDir) directory
     if [ "$gid" = "100" ] || [ "$gid" = "users" ]; then
-        log "- mount --bind $userDataDir $homeDataDir"
-        mount --bind "$userDataDir" "$homeDataDir"
+        log "- mount --bind $userDataDir $homeMountDir"
+        mount --bind "$userDataDir" "$homeMountDir"
     fi
     # for (50) staff/admins mount the data directory
     if [ "$gid" = "50" ] || [ "$gid" = "staff" ]; then
-        # chown -R :100 "$userDataDir"
-        mount --bind "$dataPath" "$homeDataDir"
-        #also make sure that sudo/admins are assigned to the users group
+        log "- mkdir -p $dataMountDir"
+        mkdir -p "$dataMountDir"
+        chown -R "$uid:$gid" "$dataMountDir"
+        mount --bind "$DATA_MOUNT" "$dataMountDir"
+
+        #also make sure that staff are assigned to the users groups
         usermod -g users "$user"
         usermod -a -G 50 "$user"
     fi
+
+fi
+
+# Make sure dirs exists
+if [ -n "$dir" ]; then
+    IFS=',' read -ra dirArgs <<< "$dir"
+    for dirPath in "${dirArgs[@]}"; do
+        homePath="/home/$user/$dirPath"
+        if [ ! -d "$homePath" ]; then
+            log "Creating directory: $homePath"
+            mkdir -p "$homePath"
+            chown -R "$uid:$gid" "$homePath"
+            # if using bind mount logic then
+            if [ "$hasDataMount" = true ]; then
+                mount --bind "$dirPath" "$homePath"
+            fi
+        else
+            log "Directory already exists: $dirPath"
+        fi
+    done
 fi
 
