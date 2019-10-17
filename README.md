@@ -35,8 +35,7 @@ merges in a number of PRs to fix a number of issues
 <!-- /TOC -->
 ## Supported tags and respective `Dockerfile` links
 
-- debian:buster-slim [`latest` (*Dockerfile*)](https://github.com/yakworks/docker-sftp/blob/master/Dockerfile) FROM  
-[![](https://img.shields.io/badge/60%20MB-14%20Layers-green?style=for-the-badge)](https://hub.docker.com/r/yakworks/sftp/tags)
+- debian:buster-slim [`latest` (*Dockerfile*)](https://github.com/yakworks/docker-sftp/blob/master/Dockerfile) [![](https://img.shields.io/badge/60%20MB-14%20Layers-green?style=for-the-badge)](https://hub.docker.com/r/yakworks/sftp/tags)
 
 **Securely share your files**
 
