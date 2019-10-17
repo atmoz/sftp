@@ -23,9 +23,9 @@ spec:
       #     path: "/"
 
       #Simple host path example
-      - name: sftp-data
+      - name: sftp-vol
         hostPath:
-          path: "/sftp-data"
+          path: "/data/sftp"
           type: DirectoryOrCreate
       - name: sftp-host-keys
         secret:
@@ -45,8 +45,8 @@ spec:
         image: yakworks/sftp:latest
         imagePullPolicy: Always
         env:
-          - name: DATA_MOUNT_NAME
-            value: yakbox
+          - name: DATA_MOUNT
+            value: /sftp-data
         ports:
           - containerPort: 22
         securityContext:
@@ -68,5 +68,5 @@ spec:
           subPath: users.conf
         - mountPath: /etc/sftp/authorized_keys.d
           name: sftp-user-keys
-        - mountPath: /data
-          name: sftp-data
+        - mountPath: /sftp-data
+          name: sftp-vol

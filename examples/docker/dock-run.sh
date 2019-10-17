@@ -14,8 +14,7 @@ docker run --name sftp --cap-add=SYS_ADMIN --cap-add=NET_ADMIN \
   -v $(pwd)/sftp-vol:/sftp-data \
   -v $(pwd)/users.conf:/etc/sftp/users.conf \
   -v $(pwd)/user-keys:/etc/sftp/authorized_keys.d \
-  -v $(pwd)/server-keys/ssh_host_ed25519_key:/etc/ssh/ssh_host_ed25519_key \
-  -v $(pwd)/server-keys/ssh_host_rsa_key:/etc/ssh/ssh_host_rsa_key \
+  -v $(pwd)/host-keys:/etc/sftp/host_keys.d \
   -d yakworks/sftp
 
   # pub keys don't seem to be needed?

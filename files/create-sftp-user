@@ -209,7 +209,11 @@ if [ -n "$dir" ]; then
             chown -R "$uid:$gid" "$homePath"
             # if using bind mount logic then
             if [ "$hasDataMount" = true ]; then
-                mount --bind "$dirPath" "$homePath"
+                if [ -d "$homePath" ]; then
+                    mount --bind "$dirPath" "$homePath"
+                else
+                    log "!!!! ERROR users must be misconfigured. $dirPath does not exist "
+                fi
             fi
         else
             log "Directory already exists: $dirPath"

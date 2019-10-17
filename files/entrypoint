@@ -67,13 +67,23 @@ if [ ! -e "$userConfFinalPath" ]; then
         exit 3
     fi
 
-    # Generate unique ssh keys for this container, if needed
-    if [ ! -e /etc/ssh/ssh_host_ed25519_key ]; then
+    # copy in host keys if mapped
+    if [ -d "/etc/sftp/host_keys.d" ]; then
+        log "/etc/sftp/host_keys.d is mapped"
+        for keyFile in "/etc/sftp/host_keys.d"/*; do
+            #The guard ensures that if there are no matching files, the loop will exit without trying to process a non-existent file
+            [ -f "$keyFile" ] || break
+            cp "$keyFile" /etc/ssh
+            # set perms
+            baseFile=$(basename $keyFile)
+            chmod 600 "/etc/ssh/$baseFile"
+            log "HOST KEY added ${keyFile} to /etc/ssh/$baseFile"
+        done
+    else
         ssh-keygen -t ed25519 -f /etc/ssh/ssh_host_ed25519_key -N ''
-    fi
-    if [ ! -e /etc/ssh/ssh_host_rsa_key ]; then
         ssh-keygen -t rsa -b 4096 -f /etc/ssh/ssh_host_rsa_key -N ''
     fi
+
 fi
 
 # Source custom scripts, if any

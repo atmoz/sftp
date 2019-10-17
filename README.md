@@ -196,18 +196,10 @@ The `examples/docker` shows this in action
 
 ## Providing server SSH host keys (recommended)
 
-For consistent server fingerprint, mount your own host keys (i.e. `/etc/ssh/ssh_host_*`)
+For consistent server fingerprint, mount `/etc/sftp/host_keys.d` with your 
+ssh_host_ed25519_key and ssh_host_rsa_key host keys. OpenSSH seems to requires limited file permissions on these as well so in init it will copy the files from host_keys.d to etc/ssh.
 
-This container will generate new SSH host keys at first run. To avoid that your users get a MITM warning when you recreate your container (and the host keys changes), you can mount your own host keys.
-
-```
-docker run \
-    -v /host/ssh_host_ed25519_key:/etc/ssh/ssh_host_ed25519_key \
-    -v /host/ssh_host_rsa_key:/etc/ssh/ssh_host_rsa_key \
-    -v /host/share:/home/foo/share \
-    -p 2222:22 -d atmoz/sftp \
-    foo::1001
-```
+If not then this container will generate new SSH host keys at first run. To avoid that your users get a MITM warning when you recreate your container (and the host keys changes), you can mount your own host keys.
 
 Tip: you can generate your keys with these commands:
 
@@ -220,6 +212,7 @@ or using this docker image itself
 
 ```
 mkdir keys
+
 # runs the image and copies the keys out to use then exits
 docker run -it --rm -v $(pwd):/workdir yakworks/sftp \
 cp /etc/ssh/ssh_host_ed25519_key* /etc/ssh/ssh_host_rsa_key* /workdir/keys
