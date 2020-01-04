@@ -1,10 +1,11 @@
-FROM debian:stretch
+FROM debian:buster
 
 
 # - Install packages
 # - OpenSSH needs /var/run/sshd to run
 # - Remove generic host keys, entrypoint generates unique keys
 RUN apt-get update && \
+	apt-get upgrade && \
     apt-get -y install openssh-server postgresql sshfs && \
     rm -rf /var/lib/apt/lists/* && \
     mkdir -p /var/run/sshd && \
