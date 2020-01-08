@@ -15,3 +15,5 @@ COPY files/entrypoint /
 EXPOSE 22
 
 ENTRYPOINT ["/entrypoint"]
+
+CMD ["sshd"]
