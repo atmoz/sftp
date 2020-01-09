@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -Eeo pipefail
+
 if [ "$1" == "sshd" ]; then
   mkdir -p /etc/sftp/
   ln -s /etc/secrets/users.conf /etc/sftp/users.conf
@@ -7,7 +9,12 @@ if [ "$1" == "sshd" ]; then
   cp -L /etc/secrets/ssh_host_rsa_key /etc/ssh/ssh_host_rsa_key
   chmod 500 /etc/ssh/ssh_host_rsa_key /etc/ssh/ssh_host_ed25519_key
 
-  set -Eeo pipefail
+  if [ -n "${SFTP_FILES_PATH}"]; then
+    for provider in `ls /home`
+    do
+      mkdir -p ${SFTP_FILES_PATH}/${provider}/files
+      ln -s ${SFTP_FILES_PATH}/${provider}/files /home/${provider}/
+  fi
 
   # shellcheck disable=2154
   trap 's=$?; echo "$0: Error on line "$LINENO": $BASH_COMMAND"; exit $s' ERR
