@@ -16,6 +16,6 @@ COPY files/create-sftp-user /usr/local/bin/
 COPY files/entrypoint /
 COPY files/users.conf /etc/sftp/users.conf
 
-EXPOSE 22
+EXPOSE 2121
 
 ENTRYPOINT ["/entrypoint"]
