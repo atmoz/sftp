@@ -1,6 +1,6 @@
 #!/bin/bash
 
-for f in pam_script_acct pam_script_auth pam_script_passwd pam_script_ses_close pam_script_ses_open
+for f in pam_script_ses_close pam_script_ses_open
 do
   ln -s /usr/share/libpam-script/ldap-pam-script.sh /usr/share/libpam-script/$f
 done
