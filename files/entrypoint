@@ -86,6 +86,9 @@ if [ -d /etc/sftp.d ]; then
     unset f
 fi
 
+log "Executing cron"
+exec /usr/sbin/cron &
+
 if $startSshd; then
     log "Executing sshd"
     exec /usr/sbin/sshd -D -e
