@@ -17,6 +17,9 @@ COPY files/create-sftp-user /usr/local/bin/
 COPY files/add-new-users /usr/local/bin/
 COPY files/entrypoint /
 
+RUN chmod 0644 /etc/cron.d/refresh-users-cron
+RUN crontab /etc/cron.d/refresh-users-cron
+
 EXPOSE 22
 
 ENTRYPOINT ["/entrypoint"]
