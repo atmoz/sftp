@@ -1,0 +1,20 @@
+#!/bin/bash
+
+reArgSkip='^([[:blank:]]*#.*|[[:blank:]]*)$' # comment or empty line
+
+# Paths
+userConfPath="/etc/sftp/users.conf"
+
+if [ ! -f "$userConfPath" ]; then
+  exit 0
+fi
+
+USERS=$(grep -v -E "$reArgSkip" < "$userConfPath")
+
+# Check that we have users in config
+if [ "$(echo "$USERS" | wc -l)" -gt 0 ]; then
+    # Import users from final conf file
+    while IFS= read -r user || [[ -n "$user" ]]; do
+        create-sftp-user "$user"
+    done < <(printf '%s\n' "$USERS")
+fi
