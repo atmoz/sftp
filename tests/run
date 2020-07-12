@@ -13,6 +13,8 @@ testDir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 buildDir="$testDir/.."
 imageName="atmoz/sftp_test"
 buildOptions=(--tag "$imageName")
+sshKeyPri="/tmp/atmoz_sftp_test_rsa"
+sshKeyPub="/tmp/atmoz_sftp_test_rsa.pub"
 
 if [ "$argOutput" == "quiet" ]; then
     redirect="/dev/null"
@@ -45,12 +47,12 @@ function oneTimeSetUp() {
     fi
 
     # Generate temporary ssh keys for testing
-    if [ ! -f "/tmp/atmoz_sftp_test_rsa" ]; then
-        ssh-keygen -t rsa -f "/tmp/atmoz_sftp_test_rsa" -N '' > "$redirect" 2>&1
+    if [ ! -f "$sshKeyPri" ]; then
+        ssh-keygen -t rsa -f "$sshKeyPri" -N '' > "$redirect" 2>&1
     fi
 
     # Private key can not be read by others (sshd will complain)
-    chmod go-rw "/tmp/atmoz_sftp_test_rsa"
+    chmod go-rw "$sshKeyPri"
 }
 
 function oneTimeTearDown() {
@@ -104,7 +106,7 @@ function runSftpCommands() {
     done
 
     echo "$commands" | sftp \
-        -i "/tmp/atmoz_sftp_test_rsa" \
+        -i "$sshKeyPri" \
         -oStrictHostKeyChecking=no \
         -oUserKnownHostsFile=/dev/null \
         -b - "$user@$ip" \
@@ -252,7 +254,7 @@ function testCreateUsersUsingCombo() {
 
 function testWriteAccessToAutocreatedDirs() {
     docker run --name "$containerName" -d \
-        -v "/tmp/atmoz_sftp_test_rsa.pub":/home/test/.ssh/keys/id_rsa.pub:ro \
+        -v "$sshKeyPub":/home/test/.ssh/keys/id_rsa.pub:ro \
         "$imageName" "test::::testdir,dir with spaces" \
         > "$redirect" 2>&1
 
@@ -284,7 +286,7 @@ function testBindmountDirScript() {
 
     docker run --name "$containerName" -d \
         --privileged=true \
-        -v "/tmp/atmoz_sftp_test_rsa.pub":/home/custom/.ssh/keys/id_rsa.pub:ro \
+        -v "$sshKeyPub":/home/custom/.ssh/keys/id_rsa.pub:ro \
         -v "$containerTmpDir/custom/bindmount":/custom \
         -v "$containerTmpDir/mount.sh":/etc/sftp.d/mount.sh \
         "$imageName" custom:123 \
@@ -301,6 +303,21 @@ function testBindmountDirScript() {
 
     docker exec "$containerName" test -d /home/custom/bindmount/test
     assertTrue "directory exist" $?
+}
+
+function testDuplicateSshKeys() {
+    docker run --name "$containerName" -d \
+        -v "$sshKeyPub":/home/user/.ssh/keys/key1.pub:ro \
+        -v "$sshKeyPub":/home/user/.ssh/keys/key2.pub:ro \
+        "$imageName" "user:" \
+        > "$redirect" 2>&1
+
+    waitForServer "$containerName"
+    assertTrue "waitForServer" $?
+
+    lines="$(docker exec "$containerName" sh -c \
+        "wc -l < /home/user/.ssh/authorized_keys")"
+    assertEquals "1" "$lines"
 }
 
 ##############################################################################
