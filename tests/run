@@ -276,6 +276,41 @@ function testWriteAccessToAutocreatedDirs() {
     assertTrue "dir with spaces write access" $?
 }
 
+function testWriteAccessToLimitedChroot() {
+    # Modified sshd_config with chrooted home subdir
+    tmpConfig="$(mktemp)"
+    sed 's/^ChrootDirectory.*/ChrootDirectory %h\/sftp/' \
+        < "$testDir/../files/sshd_config" > "$tmpConfig"
+
+    # Set correct permissions on chroot
+    tmpScript="$(mktemp)"
+    cat > "$tmpScript" <<EOF
+mkdir -p /home/*/sftp
+chown root:root /home/*/sftp
+chmod 755 /home/*/sftp
+EOF
+    chmod +x "$tmpScript"
+
+    docker run --name "$containerName" -d \
+        -v "$sshKeyPub":/home/test/.ssh/keys/id_rsa.pub:ro \
+        -v "$tmpConfig:/etc/ssh/sshd_config" \
+        -v "$tmpScript:/etc/sftp.d/limited_home_dir" \
+        "$imageName" "test::::sftp/upload" \
+        > "$redirect" 2>&1
+
+    waitForServer "$containerName"
+    assertTrue "waitForServer" $?
+
+    runSftpCommands "$containerName" "test" \
+        "cd upload" \
+        "mkdir test" \
+        "exit"
+    assertTrue "runSftpCommands" $?
+
+    docker exec "$containerName" test -d /home/test/sftp/upload/test
+    assertTrue "limited chroot write access" $?
+}
+
 function testBindmountDirScript() {
     mkdir -p "$containerTmpDir/custom/bindmount"
     echo "mkdir -p /home/custom/bindmount && \
