@@ -21,7 +21,12 @@ jobs:
       # Only allow commits signed by owner
       - name: Verify commit signature
         run: |
-          if git verify-commit --raw HEAD 2>&1 | grep -e VALIDSIG | grep -q "$GPG_KEY_FINGERPRINT"; then
+          verify_head() {
+            ( git verify-commit --raw HEAD || git verify-tag --raw $(git tag --points-at HEAD) ) 2>&1 \
+              | grep -e VALIDSIG | grep -q "$1"
+          }
+
+          if verify_head "$GPG_KEY_FINGERPRINT"; then
             echo "Verified signature from $GPG_KEY_FINGERPRINT"
           else
             echo "Missing signature by $GPG_KEY_FINGERPRINT"
