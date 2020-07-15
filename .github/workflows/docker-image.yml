@@ -1,0 +1,78 @@
+name: Docker
+
+on:
+  schedule:
+    - cron: "0 12 * * *"
+  push:
+  pull_request:
+
+env:
+  GPG_KEY_FINGERPRINT: "838460D0CBD26750AB26DF8FB9FB68F98F88BA47"
+
+jobs:
+  # Run tests.
+  # See also https://docs.docker.com/docker-hub/builds/automated-testing/
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+
+      # Only allow commits signed by owner
+      - name: Verify commit signature
+        run: |
+          if git verify-commit --raw HEAD 2>&1 | grep -e VALIDSIG | grep -q "$GPG_KEY_FINGERPRINT"; then
+            echo "Verified signature from $GPG_KEY_FINGERPRINT"
+          else
+            echo "Missing signature by $GPG_KEY_FINGERPRINT"
+            exit 1
+          fi
+
+      - name: Run tests
+        run: tests/run
+
+  # Push image to GitHub Packages.
+  # See also https://docs.docker.com/docker-hub/builds/
+  push:
+    # Ensure test job passes before pushing image.
+    needs: test
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: Build and push Docker images
+        uses: docker/build-push-action@v1.1.0
+        with:
+          # Username used to log in to a Docker registry. If not set then no login will occur
+          username: ${{ secrets.DOCKER_HUB_USERNAME }}
+          # Password or personal access token used to log in to a Docker registry. If not set then no login will occur
+          password: ${{ secrets.DOCKER_HUB_PASSWORD }}
+          # Server address of Docker registry. If not set then will default to Docker Hub
+          #registry: # optional
+          # Docker repository to tag the image with
+          repository: atmoz/sftp
+          # Comma-delimited list of tags. These will be added to the registry/repository to form the image's tags
+          #tags: # optional
+          # Automatically tags the built image with the git reference as per the readme
+          tag_with_ref: true # optional
+          # Automatically tags the built image with the git short SHA as per the readme
+          tag_with_sha: false # optional
+          # Path to the build context
+          #path: # optional, default is .
+          # Path to the Dockerfile (Default is '{path}/Dockerfile')
+          #dockerfile: # optional
+          # Sets the target stage to build
+          #target: # optional
+          # Always attempt to pull a newer version of the image
+          always_pull: true # optional
+          # Comma-delimited list of build-time variables
+          #build_args: # optional
+          # Comma-delimited list of images to consider as cache sources
+          #cache_froms: # optional
+          # Comma-delimited list of labels to add to the built image
+          #labels: # optional
+          # Adds labels with git repository information to the built image
+          add_git_labels: true # optional
+          # Whether to push the image
+          #push: # optional, default is true
