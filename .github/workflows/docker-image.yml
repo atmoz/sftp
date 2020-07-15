@@ -17,6 +17,9 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+          submodules: true
 
       # Only allow commits signed by owner
       - name: Verify commit signature
