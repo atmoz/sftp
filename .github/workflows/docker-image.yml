@@ -6,12 +6,7 @@ on:
   push:
   pull_request:
 
-env:
-  GPG_KEY_FINGERPRINT: "838460D0CBD26750AB26DF8FB9FB68F98F88BA47"
-
 jobs:
-  # Run tests.
-  # See also https://docs.docker.com/docker-hub/builds/automated-testing/
   test:
     runs-on: ubuntu-latest
 
@@ -21,28 +16,19 @@ jobs:
           fetch-depth: 0
           submodules: true
 
-      # Only allow commits signed by owner
-      - name: Verify commit signature
-        run: |
-          verify_head() {
-            ( git verify-commit --raw HEAD || git verify-tag --raw $(git tag --points-at HEAD) ) 2>&1 \
-              | grep -e VALIDSIG | grep -q "$1"
-          }
+      - name: Verify signature
+        uses: ./.github/actions/git-verify-ref
 
-          if verify_head "$GPG_KEY_FINGERPRINT"; then
-            echo "Verified signature from $GPG_KEY_FINGERPRINT"
-          else
-            echo "Missing signature by $GPG_KEY_FINGERPRINT"
-            exit 1
-          fi
+      - name: Run ShellCheck
+        uses: ludeeus/action-shellcheck@master
+        with:
+          ignore: tests/shunit2
 
       - name: Run tests
         run: tests/run
 
-  # Push image to GitHub Packages.
-  # See also https://docs.docker.com/docker-hub/builds/
   push:
-    # Ensure test job passes before pushing image.
+    if: ${{ github.event_name == "push" && github.ref == "master" }}
     needs: test
 
     runs-on: ubuntu-latest
