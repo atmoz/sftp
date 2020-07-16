@@ -24,7 +24,7 @@ fi
 
 if [ ! -f "$testDir/shunit2/shunit2" ]; then
     echo "Could not find shunit2 in $testDir/shunit2."
-    echo "Run 'git submodules init && git submodules update'"
+    echo "Run 'git submodule update --init'"
     exit 2
 fi
 
