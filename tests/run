@@ -74,7 +74,7 @@ function tearDown() {
     retireContainer "$containerName"
 
     if [ "$argCleanup" == "cleanup" ] && [ -d "$containerTmpDir" ]; then
-        rm -rf "$containerTmpDir"
+        rm -rf "$containerTmpDir" || true # Can fail on GitHub Actions
     fi
 }
 
