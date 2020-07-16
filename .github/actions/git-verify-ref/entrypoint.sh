@@ -12,7 +12,7 @@ git_options="${*:3}"
 
 
 # GitHub Actions fix
-if [ "$HOME" == "/github/home/" ]; then
+if [ -e "/github/home/" ]; then
     cp -r /root/.gnupg /github/home/
 fi
 
