@@ -1,13 +1,13 @@
 # SFTP
 
-![Docker Automated build](https://img.shields.io/docker/automated/atmoz/sftp.svg) ![Docker Build Status](https://img.shields.io/docker/build/atmoz/sftp.svg) ![Docker Stars](https://img.shields.io/docker/stars/atmoz/sftp.svg) ![Docker Pulls](https://img.shields.io/docker/pulls/atmoz/sftp.svg)
+![GitHub Workflow Status](https://img.shields.io/github/workflow/status/atmoz/sftp/build?logo=github) ![GitHub stars](https://img.shields.io/github/stars/atmoz/sftp?logo=github) ![Docker Stars](https://img.shields.io/docker/stars/atmoz/sftp?label=stars&logo=docker) ![Docker Pulls](https://img.shields.io/docker/pulls/atmoz/sftp?label=pulls&logo=docker)
 
 ![OpenSSH logo](https://raw.githubusercontent.com/atmoz/sftp/master/openssh.png "Powered by OpenSSH")
 
 # Supported tags and respective `Dockerfile` links
 
-- [`debian`, `latest` (*Dockerfile*)](https://github.com/atmoz/sftp/blob/master/Dockerfile) [![](https://images.microbadger.com/badges/image/atmoz/sftp.svg)](http://microbadger.com/images/atmoz/sftp "Get your own image badge on microbadger.com")
-- [`alpine` (*Dockerfile*)](https://github.com/atmoz/sftp/blob/alpine/Dockerfile) [![](https://images.microbadger.com/badges/image/atmoz/sftp:alpine.svg)](http://microbadger.com/images/atmoz/sftp:alpine "Get your own image badge on microbadger.com")
+- [`debian`, `latest` (*Dockerfile*)](https://github.com/atmoz/sftp/blob/master/Dockerfile) ![Docker Image Size (debian)](https://img.shields.io/docker/image-size/atmoz/sftp/debian?label=debian&logo=debian&style=plastic)
+- [`alpine` (*Dockerfile*)](https://github.com/atmoz/sftp/blob/master/Dockerfile-alpine) ![Docker Image Size (alpine)](https://img.shields.io/docker/image-size/atmoz/sftp/alpine?label=alpine&logo=Alpine%20Linux&style=plastic)
 
 # Securely share your files
 
