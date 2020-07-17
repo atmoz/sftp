@@ -4,7 +4,15 @@ on:
   schedule:
     - cron: "0 12 * * *"
   push:
+    paths-ignore:
+      - "*.md"
+      - "*.txt"
+      - "*.png"
   pull_request:
+    paths-ignore:
+      - "*.md"
+      - "*.txt"
+      - "*.png"
 
 env:
   IMAGE_NAME: atmoz/sftp
