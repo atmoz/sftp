@@ -36,6 +36,16 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
+
+      - name: Define tags
+        id: define_tags
+        run: |
+          if [ "$GITHUB_REF" == "refs/heads/master" ]; then
+            echo "::set-output name=tags::debian"
+          else
+            echo "::set-output name=tags::"
+          fi
+
       - name: Build and push Docker images
         uses: docker/build-push-action@v1.1.0
         with:
@@ -48,7 +58,7 @@ jobs:
           # Docker repository to tag the image with
           repository: atmoz/sftp
           # Comma-delimited list of tags. These will be added to the registry/repository to form the image's tags
-          #tags: # optional
+          tags: ${{ steps.define_tags.outputs.tags }} # optional
           # Automatically tags the built image with the git reference as per the readme
           tag_with_ref: true # optional
           # Automatically tags the built image with the git short SHA as per the readme
