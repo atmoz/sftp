@@ -17,6 +17,7 @@ jobs:
           submodules: true
 
       - name: Verify signature
+        if: github.event_name == 'push' && github.ref == 'refs/heads/master'
         uses: ./.github/actions/git-verify-ref
 
       - name: Run ShellCheck
