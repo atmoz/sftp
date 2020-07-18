@@ -32,8 +32,9 @@ jobs:
           docker build . \
             --pull=true \
             --file=Dockerfile \
-            --tag="$IMAGE_NAME:debian" \
             --tag="$IMAGE_NAME:latest" \
+            --tag="$IMAGE_NAME:debian" \
+            --tag="$IMAGE_NAME:debian-$GITHUB_SHA" \
             --label="org.opencontainers.image.source=$GITHUB_SERVER_URL/$GITHUB_REPOSITORY" \
             --label="org.opencontainers.image.revision=$GITHUB_SHA" \
             --label="org.opencontainers.image.created=$(date --rfc-3339=seconds)"
@@ -47,6 +48,7 @@ jobs:
             --pull=true \
             --file=Dockerfile-alpine \
             --tag="$IMAGE_NAME:alpine" \
+            --tag="$IMAGE_NAME:alpine-$GITHUB_SHA" \
             --label="org.opencontainers.image.source=$GITHUB_SERVER_URL/$GITHUB_REPOSITORY" \
             --label="org.opencontainers.image.revision=$GITHUB_SHA" \
             --label="org.opencontainers.image.created=$(date --rfc-3339=seconds)"
