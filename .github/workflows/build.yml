@@ -63,7 +63,9 @@ jobs:
 
       - name: Verify signature
         if: github.event_name != 'pull_request' && github.ref == 'refs/heads/master'
-        uses: ./.github/actions/git-verify-ref
+        uses: atmoz/git-verify-ref@master
+        with:
+          public_key_dir: ./github/public-keys
 
       - name: Push images to Docker Hub registry
         if: github.event_name != 'pull_request' && github.ref == 'refs/heads/master'

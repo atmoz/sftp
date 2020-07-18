@@ -1,6 +1,0 @@
-name: 'Verify git ref'
-description: 'Verify GPG signed commits or tags'
-
-runs:
-  using: 'docker'
-  image: 'Dockerfile'
