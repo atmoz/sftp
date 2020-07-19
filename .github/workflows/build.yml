@@ -62,13 +62,13 @@ jobs:
           ignore: tests/shunit2
 
       - name: Verify signature
-        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/master'
+        if: github.ref == 'refs/heads/master'
         uses: atmoz/git-verify-ref@master
         with:
           public_key_dir: .github/public-keys
 
       - name: Push images to Docker Hub registry
-        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/master'
+        if: github.ref == 'refs/heads/master'
         run: |
           echo "${{ secrets.DOCKER_HUB_PASSWORD }}" | docker login \
             -u ${{ secrets.DOCKER_HUB_USERNAME }} --password-stdin
@@ -76,7 +76,7 @@ jobs:
           docker push $IMAGE_NAME # no tags specified to include all tags
 
       - name: Push images to GitHub registry
-        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/master'
+        if: github.ref == 'refs/heads/master'
         run: |
           echo "${{ secrets.GITHUB_TOKEN }}" | docker login docker.pkg.github.com \
             -u ${{ github.actor }} --password-stdin
