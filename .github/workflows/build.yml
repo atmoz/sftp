@@ -72,6 +72,7 @@ jobs:
             -u ${{ secrets.DOCKER_HUB_USERNAME }} --password-stdin
 
           docker push $IMAGE_NAME # no tags specified to include all tags
+          docker logout
 
       - name: Push images to GitHub registry
         if: github.ref == 'refs/heads/master'
@@ -85,4 +86,5 @@ jobs:
           docker tag $IMAGE_NAME:alpine $TAG_ALPINE
           docker push $TAG_DEBIAN
           docker push $TAG_ALPINE
+          docker logout docker.pkg.github.com
 
