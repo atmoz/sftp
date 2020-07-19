@@ -9,10 +9,6 @@ on:
       - "*.txt"
       - "*.png"
   pull_request:
-    paths-ignore:
-      - "*.md"
-      - "*.txt"
-      - "*.png"
 
 env:
   IMAGE_NAME: atmoz/sftp
