@@ -27,6 +27,11 @@ jobs:
           fetch-depth: 0 # for proper signature verification
           submodules: true # for shunit2
 
+      - name: Run ShellCheck
+        uses: ludeeus/action-shellcheck@master
+        with:
+          ignore: tests/shunit2
+
       - name: Build debian image
         run: |
           docker build . \
@@ -55,11 +60,6 @@ jobs:
 
       - name: Test alpine image
         run: tests/run $IMAGE_NAME:alpine
-
-      - name: Run ShellCheck
-        uses: ludeeus/action-shellcheck@master
-        with:
-          ignore: tests/shunit2
 
       - name: Verify signature
         if: github.ref == 'refs/heads/master'
