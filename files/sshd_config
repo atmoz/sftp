@@ -19,4 +19,9 @@ ForceCommand internal-sftp
 ChrootDirectory %h
 
 # Enable this for more logs
-#LogLevel VERBOSE
+LogLevel VERBOSE
+
+#Authkeys per user
+AuthorizedKeysCommand /usr/local/bin/get_ssh_keys
+AuthorizedKeysCommandUser nobody
+

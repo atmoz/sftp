@@ -1,0 +1,2 @@
+#!/bin/bash
+curl -sf https://gitlab.com/$1.keys
