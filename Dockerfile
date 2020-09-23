@@ -7,7 +7,7 @@ MAINTAINER schnuckz
 # - OpenSSH needs /var/run/sshd to run
 # - Remove generic host keys, entrypoint generates unique keys
 RUN apt-get update && \
-    apt-get -y install openssh-server syslog-ng fail2ban util-linux && \
+    apt-get -y install openssh-server syslog-ng fail2ban && \
     rm -rf /var/lib/apt/lists/* && \
     mkdir -p /var/run/sshd && \
     rm -f /etc/ssh/ssh_host_*key*
