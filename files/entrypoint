@@ -147,6 +147,7 @@ if $startSshd; then
     log "Executing sshd"
     #exec /usr/sbin/sshd -D -e
     service ssh start
+    tail -f /var/log/auth.log
 else
     log "Executing $*"
     exec "$@"
