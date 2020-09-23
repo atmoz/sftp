@@ -12,8 +12,8 @@ RUN apt-get update && \
     mkdir -p /var/run/sshd && \
     rm -f /etc/ssh/ssh_host_*key*
 
-COPY files/sshd_config /etc/ssh/sshd_config
-COPY files/jail.local /etc/fail2ban/jail.local
+COPY files/sshd_config /etc/default/ssh/sshd_config
+COPY files/jail.local /etc/default/fail2ban/jail.local
 COPY files/create-sftp-user /usr/local/bin/
 COPY files/entrypoint /
 
