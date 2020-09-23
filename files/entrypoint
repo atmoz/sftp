@@ -130,27 +130,11 @@ if [ -d /config/sshd/scripts ]; then
     unset f
 fi
 
-
-if [[ -e /var/run/fail2ban/fail2ban.sock ]]; then
-	rm /var/run/fail2ban/fail2ban.sock
-fi
-
-if [[ -e /var/run/sshd.pid ]]; then
-	rm /var/run/sshd.pid
-fi
-
-if [[ -e /var/log/auth.log ]]; then
-	> /var/log/auth.log
-fi
-
 if $startSshd; then
-    service syslog-ng start
     log "Executing sshd"
     exec /usr/sbin/sshd -D -e
-    log "Executing fail2ban"
     service fail2ban start
-    tailf /var/log/auth.log
 else
-    log "Executing $@"
+    log "Executing $*"
     exec "$@"
 fi
