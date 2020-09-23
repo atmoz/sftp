@@ -18,7 +18,7 @@ fi
 
 if [[ ! -e /config/fail2ban/jail.local ]]; then
 	echo "$(date) [err] jail.conf missing from /config/fail2ban/... Replacing with default backup!"
-	cp /etc/default/fail2ban/jail.local /config/fail2ban/jail.local
+	cp /etc/schnuckz/default/fail2ban/jail.local /config/fail2ban/jail.local
 	rm /etc/fail2ban/jail.local
 	cp /config/fail2ban/jail.local /etc/fail2ban/jail.local
 else
@@ -29,7 +29,7 @@ fi
 
 if [[ ! -e /config/sshd/sshd_config ]]; then
 	echo "$(date) [err] sshd_config missing from /config/sshd/... Replacing with default backup!"
-	cp "/etc/default/sshd/sshd_config" "/config/sshd/sshd_config"
+	cp "/etc/default/schnuckz/sshd/sshd_config" "/config/sshd/sshd_config"
 	rm /etc/ssh/sshd_config
 	cp "/config/sshd/sshd_config" "/etc/ssh/sshd_config"
 else
