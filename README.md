@@ -1,20 +1,26 @@
-# SFTP
+# SFTP with Fail2ban
 
 ![GitHub Workflow Status](https://img.shields.io/github/workflow/status/schnuckz/sftp/build?logo=github) ![GitHub stars](https://img.shields.io/github/stars/schnuckz/sftp?logo=github) ![Docker Stars](https://img.shields.io/docker/stars/schnuckz/sftp?label=stars&logo=docker) ![Docker Pulls](https://img.shields.io/docker/pulls/schnuckz/sftp?label=pulls&logo=docker)
 
 # Supported tags and respective `Dockerfile` links
 
 - [`debian`, `latest` (*Dockerfile*)](https://github.com/schnuckz/sftp/blob/master/Dockerfile) ![Docker Image Size (debian)](https://img.shields.io/docker/image-size/schnuckz/sftp/debian?label=debian&logo=debian&style=plastic)
-- [`alpine` (*Dockerfile*)](https://github.com/schnuckz/sftp/blob/master/Dockerfile-alpine) ![Docker Image Size (alpine)](https://img.shields.io/docker/image-size/schnuckz/sftp/alpine?label=alpine&logo=Alpine%20Linux&style=plastic)
 
 # Securely share your files
 
-Easy to use SFTP ([SSH File Transfer Protocol](https://en.wikipedia.org/wiki/SSH_File_Transfer_Protocol)) server with [OpenSSH](https://en.wikipedia.org/wiki/OpenSSH).
+Easy to use SFTP ([SSH File Transfer Protocol](https://en.wikipedia.org/wiki/SSH_File_Transfer_Protocol)) server with [OpenSSH](https://en.wikipedia.org/wiki/OpenSSH). Forked from atmoz/sftp. Code also from MarkusMcNugen/docker-sftp
+This is an automated build linked with [debian:buster](https://hub.docker.com/r/debian/buster/).
+
+# Docker Features
+* Base: debian:buster
+* Hardened default ssh config
+* Fail2ban
+* Optional config volume can be mounted for custom ssh and fail2ban configuration and easily viewing fail2ban log
 
 # Usage
 
 - Define users in (1) command arguments, (2) `SFTP_USERS` environment variable
-  or (3) in file mounted as `/etc/sftp/users.conf` (syntax:
+  or (3) in file mounted as `/config/sshd/users.conf` (syntax:
   `user:pass[:e][:uid[:gid[:dir1[,dir2]...]]] ...`, see below for examples)
   - Set UID/GID manually for your users if you want them to make changes to
     your mounted volumes with permissions matching your host filesystem.
@@ -27,14 +33,14 @@ Easy to use SFTP ([SSH File Transfer Protocol](https://en.wikipedia.org/wiki/SSH
     Just remember that the users can't create new files directly under their
     own home directory, so make sure there are at least one subdirectory if you
     want them to upload files.
-  - For consistent server fingerprint, mount your own host keys (i.e. `/etc/ssh/ssh_host_*`)
+  - For consistent server fingerprint, mount your own host keys (i.e. `/config/sshd/keys/ssh_host_*`)
 
 # Examples
 
 ## Simplest docker run example
 
 ```
-docker run -p 22:22 -d atmoz/sftp foo:pass:::upload
+docker run -p 22:22 -d schnuckz/sftp foo:pass:::upload
 ```
 
 User "foo" with password "pass" can login with sftp and upload files to a folder called "upload". No mounted directories or custom UID/GID. Later you can inspect the files and use `--volumes-from` to mount them somewhere else (or see next example).
@@ -46,7 +52,7 @@ Let's mount a directory and set UID:
 ```
 docker run \
     -v <host-dir>/upload:/home/foo/upload \
-    -p 2222:22 -d atmoz/sftp \
+    -p 2222:22 -d schnuckz/sftp \
     foo:pass:1001
 ```
 
@@ -54,7 +60,7 @@ docker run \
 
 ```
 sftp:
-    image: atmoz/sftp
+    image: schnuckz/sftp
     volumes:
         - <host-dir>/upload:/home/foo/upload
     ports:
