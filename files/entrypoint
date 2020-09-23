@@ -143,8 +143,7 @@ fi
 if $startSshd; then
     service inetutils-syslogd start
     log "Executing sshd"
-    #exec /usr/sbin/sshd -D -e
-    service ssh start
+    exec /usr/sbin/sshd -D -e
     log "Executing fail2ban"
     service fail2ban start
 else
