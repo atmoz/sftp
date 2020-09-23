@@ -77,6 +77,7 @@ The OpenSSH server runs by default on port 22, and in this example, we are forwa
 
 Only one Persisten Volume for all config & keys.
 
+```
 /config/
 ├── fail2ban
 │   ├── fail2ban.log (read only)
@@ -92,6 +93,7 @@ Only one Persisten Volume for all config & keys.
 │   └── users.conf
 └── userkeys
     └── foo.pub
+```
 
 ## Store users in config
 
