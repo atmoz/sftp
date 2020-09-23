@@ -66,7 +66,7 @@ if [ -n "$gid" ]; then
 fi
 
 useradd "${useraddOptions[@]}" "$user"
-mkdir -p "/home/$user"
+mkdir -p "/home/$user/.ssh"
 chown root:root "/home/$user"
 chmod 755 "/home/$user"
 
