@@ -29,6 +29,3 @@ maxretry = 5
 
 [sshd]
 enabled = true
-
-[sshd-ddos]
-enabled = true
