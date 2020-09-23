@@ -18,7 +18,7 @@ fi
 
 if [[ ! -e /config/fail2ban/jail.local ]]; then
 	echo "$(date) [err] jail.conf missing from /config/fail2ban/... Replacing with default backup!"
-	cp /etc/schnuckz/default/fail2ban/jail.local /config/fail2ban/jail.local
+	cp /etc/default/schnuckz/fail2ban/jail.local /config/fail2ban/jail.local
 	rm /etc/fail2ban/jail.local
 	cp /config/fail2ban/jail.local /etc/fail2ban/jail.local
 else
