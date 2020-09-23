@@ -1,6 +1,48 @@
 #!/bin/bash
 set -Eeo pipefail
 
+#unraid
+mkdir -p /config/fail2ban
+mkdir -p /config/userkeys
+mkdir -p /config/sshd/keys
+
+# Copy default config files if removed
+if [[ ! -e /config/fail2ban/jail.conf ]]; then
+	echo "$(date) [err] jail.conf missing from /config/fail2ban/... Replacing with default backup!"
+	cp /etc/fail2ban/jail.conf /config/fail2ban/jail.conf
+	rm /etc/fail2ban/jail.conf
+	cp /config/fail2ban/jail.conf /etc/fail2ban/jail.conf
+else
+        echo "$(date) [info] Existing jail.conf found. Copying to container filesystem!"
+	rm /etc/fail2ban/jail.conf
+	cp "/config/fail2ban/jail.conf" "/etc/fail2ban/jail.conf"
+fi
+
+if [[ ! -e /config/fail2ban/jail.local ]]; then
+	echo "$(date) [err] jail.conf missing from /config/fail2ban/... Replacing with default backup!"
+	cp /etc/default/fail2ban/jail.local /config/fail2ban/jail.local
+	rm /etc/fail2ban/jail.local
+	cp /config/fail2ban/jail.local /etc/fail2ban/jail.local
+else
+        echo "$(date) [info] Existing jail.conf found. Copying to container filesystem!"
+	rm /etc/fail2ban/jail.conf
+	cp "/config/fail2ban/jail.conf" "/etc/fail2ban/jail.conf"
+fi
+
+if [[ ! -e /config/sshd/sshd_config ]]; then
+	echo "$(date) [err] sshd_config missing from /config/sshd/... Replacing with default backup!"
+	cp "/etc/default/sshd/sshd_config" "/config/sshd/sshd_config"
+	rm /etc/ssh/sshd_config
+	cp "/config/sshd/sshd_config" "/etc/ssh/sshd_config"
+else
+        echo "$(date) [info] Existing sshd_config found. Copying to container filesystem!"
+	rm /etc/ssh/sshd_config
+	cp "/config/sshd/sshd_config" "/etc/ssh/sshd_config"
+fi
+
+# Log to /config/fail2ban
+sed -i 's|^logtarget = /var/log/fail2ban.log|logtarget = /config/fail2ban/fail2ban.log|' /etc/fail2ban/fail2ban.conf
+
 # shellcheck disable=2154
 trap 's=$?; echo "$0: Error on line "$LINENO": $BASH_COMMAND"; exit $s' ERR
 
@@ -8,7 +50,7 @@ reArgsMaybe="^[^:[:space:]]+:.*$" # Smallest indication of attempt to use argume
 reArgSkip='^([[:blank:]]*#.*|[[:blank:]]*)$' # comment or empty line
 
 # Paths
-userConfPath="/etc/sftp/users.conf"
+userConfPath="/config/sshd/users.conf"
 userConfPathLegacy="/etc/sftp-users.conf"
 userConfFinalPath="/var/run/sftp/users.conf"
 
@@ -78,8 +120,8 @@ if [ ! -f "$userConfFinalPath" ]; then
 fi
 
 # Source custom scripts, if any
-if [ -d /etc/sftp.d ]; then
-    for f in /etc/sftp.d/*; do
+if [ -d /config/sshd/scripts ]; then
+    for f in /config/sshd/scripts*; do
         if [ -x "$f" ]; then
             log "Running $f ..."
             $f
