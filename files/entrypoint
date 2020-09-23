@@ -143,11 +143,11 @@ fi
 if $startSshd; then
     service syslog-ng start
     log "Executing sshd"
-    #exec /usr/sbin/sshd -D -e
-    service ssh start
+    exec /usr/sbin/sshd -D -e
+    #service ssh start
     log "Executing fail2ban"
     service fail2ban start
-    #tail -f /var/log/auth.log
+    tail -f /var/log/auth.log
 else
     log "Executing $*"
     exec "$@"
