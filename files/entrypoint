@@ -145,7 +145,6 @@ if $startSshd; then
     log "Executing fail2ban"
     service fail2ban start
     log "Executing sshd"
-    #exec /usr/sbin/sshd -D -e
     service ssh start
     tail -f /var/log/auth.log
 else
