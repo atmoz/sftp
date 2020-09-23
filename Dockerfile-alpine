@@ -18,7 +18,7 @@ RUN mkdir -p /etc/default/schnuckz/sshd && \
 COPY files/sshd_config /etc/default/schnuckz/sshd/sshd_config
 COPY files/jail.local /etc/default/schnuckz/fail2ban/jail.local
 COPY files/create-sftp-user /usr/local/bin/
-COPY files/entrypoint /
+COPY files/entrypoint-alpine /entrypoint
 
 EXPOSE 22
 
