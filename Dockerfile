@@ -1,4 +1,4 @@
-FROM debian:buster
+FROM phusion/baseimage:master-amd64
 MAINTAINER schnuckz
 # Forked from atmoz/sftp for unRAID + fail2ban + raspberryPi + rsync
 
