@@ -10,14 +10,14 @@
 ignoreip = 127.0.0.1/8
 
 # "bantime" is the number of seconds that a host is banned.
-bantime  = 600
+bantime  = 60m
 
 # A host is banned if it has generated "maxretry" during the last "findtime"
 # seconds.
-findtime  = 600
+findtime  = 10m
 
 # "maxretry" is the number of failures before a host get banned.
-maxretry = 5
+maxretry = 3
 
 #
 # JAILS
