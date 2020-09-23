@@ -80,26 +80,26 @@ else
     usermod -p "*" "$user" # disabled password
 fi
 
-        # copy user key, if it exists
-		key_file="/config/userkeys/$user.pub"
-		if [ -f  $key_file ]; then
-			chown $uid /home/$user/.ssh
-			chmod 700 /home/$user/.ssh
+# copy user key, if it exists
+key_file="/config/userkeys/$user.pub"
+if [ -f  $key_file ]; then
+    chown $uid /home/$user/.ssh
+    chmod 700 /home/$user/.ssh
 
-			echo "Copying key for $user"
-			dest_key_file="/home/$user/.ssh/$user.pub"
-			if [ -f $dest_key_file ]; then
-			    rm $dest_key_file
-			fi
-			cp $key_file $dest_key_file
-			chown $uid $dest_key_file
-			chmod 600 $dest_key_file
+    echo "Copying key for $user"
+    dest_key_file="/home/$user/.ssh/$user.pub"
+    if [ -f $dest_key_file ]; then
+        rm $dest_key_file
+    fi
+    cp $key_file $dest_key_file
+    chown $uid $dest_key_file
+    chmod 600 $dest_key_file
 
-			# echo key into authorized_keys and set perms
-			cat $key_file > /home/$user/.ssh/authorized_keys
-			chown $uid /home/$user/.ssh/authorized_keys
-			chmod 600 /home/$user/.ssh/authorized_keys
-		fi
+    # echo key into authorized_keys and set perms
+    cat $key_file > /home/$user/.ssh/authorized_keys
+    chown $uid /home/$user/.ssh/authorized_keys
+    chmod 600 /home/$user/.ssh/authorized_keys
+fi
 
 # Add SSH keys to authorized_keys with valid permissions
 userKeysQueuedDir="/home/$user/.ssh/keys"
