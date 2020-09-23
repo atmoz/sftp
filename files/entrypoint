@@ -141,6 +141,7 @@ if [[ -e /var/log/auth.log ]]; then
 fi
 
 if $startSshd; then
+    service inetutils-syslogd start
     log "Executing sshd"
     exec /usr/sbin/sshd -D -e
     log "Executing fail2ban"
