@@ -8,10 +8,10 @@ mkdir -p /config/sshd/keys
 
 # Copy default config files if removed
 if [[ ! -e /config/fail2ban/jail.conf ]]; then
-	echo "$(date) [err] jail.conf missing from /config/fail2ban/... Replacing with default! Use only jail.local"
+	echo "$(date) [info] jail.conf missing from /config/fail2ban/... Replacing with default! Use only jail.local!"
 	cp /etc/fail2ban/jail.conf /config/fail2ban/jail.conf
 else
-        echo "$(date) [info] Existing jail.conf found. Copying default from container filesystem! Use only jail.local!"
+        echo "$(date) [info] Existing jail.conf found. Replacing with default! Use only jail.local!"
 	rm /config/fail2ban/jail.conf
 	cp "/etc/fail2ban/jail.conf" "/config/fail2ban/jail.conf"
 fi
@@ -104,10 +104,10 @@ if [ ! -f "$userConfFinalPath" ]; then
 
     # Generate unique ssh keys for this container, if needed
     if [ ! -f /config/sshd/keys/ssh_host_ed25519_key ]; then
-        ssh-keygen -t ed25519 -f /etc/ssh/ssh_host_ed25519_key -N ''
+        ssh-keygen -t ed25519 -f /config/sshd/keys/ssh_host_ed25519_key -N ''
     fi
     if [ ! -f /config/sshd/keys/ssh_host_rsa_key ]; then
-        ssh-keygen -t rsa -b 4096 -f /etc/ssh/ssh_host_rsa_key -N ''
+        ssh-keygen -t rsa -b 4096 -f /config/sshd/keys/ssh_host_rsa_key -N ''
     fi
 
     # Restrict access from other users
@@ -142,10 +142,11 @@ fi
 
 if $startSshd; then
     service inetutils-syslogd start
-    log "Executing sshd"
-    exec /usr/sbin/sshd -D
     log "Executing fail2ban"
     service fail2ban start
+    log "Executing sshd"
+    #exec /usr/sbin/sshd -D -e
+    service ssh start
 else
     log "Executing $*"
     exec "$@"
