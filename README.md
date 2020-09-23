@@ -14,6 +14,7 @@ This is an automated build linked with [debian:buster](https://hub.docker.com/r/
 # Docker Features
 * Base: debian:buster
 * Hardened default ssh config
+* Mount only one persistent Volume for all config-files
 * Fail2ban
 * Optional config volume can be mounted for custom ssh and fail2ban configuration and easily viewing fail2ban log
 
@@ -72,16 +73,36 @@ sftp:
 
 The OpenSSH server runs by default on port 22, and in this example, we are forwarding the container's port 22 to the host's port 2222. To log in with the OpenSSH client, run: `sftp -P 2222 foo@<host-ip>`
 
+## Use Persisten Storage
+
+Only one Persisten Volume for all config & keys.
+
+/config/
+├── fail2ban
+│   ├── fail2ban.log (read only)
+│   ├── jail.conf (read only, use jail.local)
+│   └── jail.local
+├── sshd
+│   ├── keys
+│   │   ├── ssh_host_ed25519_key
+│   │   └── ssh_host_rsa_key
+│   ├── scripts
+│   │   └── bindmount.sh
+│   ├── sshd_config
+│   └── users.conf
+└── userkeys
+    └── foo.pub
+
 ## Store users in config
 
 ```
 docker run \
-    -v <host-dir>/users.conf:/etc/sftp/users.conf:ro \
-    -v mySftpVolume:/home \
-    -p 2222:22 -d atmoz/sftp
+    -v <host-dir>:/config \
+    -v mySftpVolume:/home/foo/share \
+    -p 2222:22 -d schnuckz/sftp
 ```
 
-<host-dir>/users.conf:
+<host-dir>/sshd/users.conf:
 
 ```
 foo:123:1001:100
@@ -96,7 +117,7 @@ Add `:e` behind password to mark it as encrypted. Use single quotes if using ter
 ```
 docker run \
     -v <host-dir>/share:/home/foo/share \
-    -p 2222:22 -d atmoz/sftp \
+    -p 2222:22 -d schnuckz/sftp \
     'foo:$1$0G2g0GSt$ewU0t6GXG15.0hWoOX8X9.:e:1001'
 ```
 
@@ -109,9 +130,8 @@ Mount public keys in the user's `.ssh/keys/` directory. All keys are automatical
 
 ```
 docker run \
-    -v <host-dir>/id_rsa.pub:/home/foo/.ssh/keys/id_rsa.pub:ro \
-    -v <host-dir>/id_other.pub:/home/foo/.ssh/keys/id_other.pub:ro \
-    -v <host-dir>/share:/home/foo/share \
+    -v <host-dir>:/config \
+    -v mySftpVolume:/home/foo/share \
     -p 2222:22 -d atmoz/sftp \
     foo::1001
 ```
@@ -122,12 +142,14 @@ This container will generate new SSH host keys at first run. To avoid that your 
 
 ```
 docker run \
-    -v <host-dir>/ssh_host_ed25519_key:/etc/ssh/ssh_host_ed25519_key \
-    -v <host-dir>/ssh_host_rsa_key:/etc/ssh/ssh_host_rsa_key \
-    -v <host-dir>/share:/home/foo/share \
-    -p 2222:22 -d atmoz/sftp \
+    -v <host-dir>:/config \
+    -v mySftpVolume:/home/foo/share \
+    -p 2222:22 -d schnuckz/sftp \
     foo::1001
 ```
+
+<host-dir>/sshd/keys/ssh_host_ed25519_key
+<host-dir>/sshd/keys/ssh_host_rsa_key
 
 Tip: you can generate your keys with these commands:
 
@@ -138,7 +160,7 @@ ssh-keygen -t rsa -b 4096 -f ssh_host_rsa_key < /dev/null
 
 ## Execute custom scripts or applications
 
-Put your programs in `/etc/sftp.d/` and it will automatically run when the container starts.
+Put your programs in `/config/sshd/scripts/` and it will automatically run when the container starts.
 See next section for an example.
 
 ## Bindmount dirs from another location
