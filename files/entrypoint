@@ -147,7 +147,7 @@ if $startSshd; then
     #service ssh start
     log "Executing fail2ban"
     service fail2ban start
-    tail -f /var/log/auth.log
+    #tail -f /var/log/auth.log
 else
     log "Executing $*"
     exec "$@"
