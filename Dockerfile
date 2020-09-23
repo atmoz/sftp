@@ -12,6 +12,9 @@ RUN apt-get update && \
     mkdir -p /var/run/sshd && \
     rm -f /etc/ssh/ssh_host_*key*
 
+RUN mkdir -p /etc/default/sshd && \
+    mkdir -p /etc/default/f2ban
+
 COPY files/sshd_config /etc/default/ssh/sshd_config
 COPY files/jail.local /etc/default/fail2ban/jail.local
 COPY files/create-sftp-user /usr/local/bin/
