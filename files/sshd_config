@@ -20,5 +20,5 @@ ChrootDirectory %h
 
 # Enable this for more logs
 #LogLevel VERBOSE
-#SyslogFacility AUTH
-#LogLevel INFO
+SyslogFacility AUTH
+LogLevel INFO
