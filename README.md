@@ -83,9 +83,9 @@ docker run \
 /host/users.conf:
 
 ```
-foo:123:1001:100
-bar:abc:1002:100
-baz:xyz:1003:100
+foo:123:1001:100:
+bar:abc:1002:100:
+baz:xyz:1003:100:
 ```
 
 ## Encrypted password
