@@ -11,7 +11,7 @@ on:
   pull_request:
 
 env:
-  IMAGE_NAME: kalioz/sftp # TODO change if this is ever merged back to atmoz
+  IMAGE_NAME: atmoz/sftp
 
 jobs:
   build:
@@ -106,12 +106,11 @@ jobs:
       - name: Test alpine image
         run: tests/run $IMAGE_NAME:alpine
 
-      # TODO set it back to on as it is working only on "atmoz" rempo
-      # - name: Verify signature
-      #   if: github.ref == 'refs/heads/master'
-      #   uses: atmoz/git-verify-ref@master
-      #   with:
-      #     import-github-users: atmoz
+      - name: Verify signature
+        if: github.ref == 'refs/heads/master'
+        uses: atmoz/git-verify-ref@master
+        with:
+          import-github-users: atmoz
 
       # Build & push docker image multi-platform
       # note: the linux/amd64 image is not rebuilt, the cache is still present from the previous steps.
