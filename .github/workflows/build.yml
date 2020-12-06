@@ -11,7 +11,7 @@ on:
   pull_request:
 
 env:
-  IMAGE_NAME: atmoz/sftp
+  IMAGE_NAME: kalioz/sftp # TODO change if this is ever merged back to atmoz
 
 jobs:
   build:
@@ -27,60 +27,140 @@ jobs:
         uses: ludeeus/action-shellcheck@master
         with:
           ignore: tests/shunit2
-
-      - name: Build debian image
+      
+      # get the date for the docker labels 
+      - name: Prepare environment variables
+        id: rfc_date
         run: |
-          docker build . \
-            --pull=true \
-            --file=Dockerfile \
-            --tag="$IMAGE_NAME:latest" \
-            --tag="$IMAGE_NAME:debian" \
-            --label="org.opencontainers.image.source=$GITHUB_SERVER_URL/$GITHUB_REPOSITORY" \
-            --label="org.opencontainers.image.revision=$GITHUB_SHA" \
-            --label="org.opencontainers.image.created=$(date --rfc-3339=seconds)"
+          echo "rfc_date=$(date --rfc-3339=seconds)" >> $GITHUB_ENV
+          echo "gh_server_url=$GITHUB_SERVER_URL" >> $GITHUB_ENV # because I can't seem to get it with ${{ env.GITHUB_SERVER_URL }}
+
+      # QEMU is needeed for multi-arch build
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v1
+      
+      # Buildx is the tool used for multi-arch build
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v1
+      
+      - name: Login to DockerHub
+        uses: docker/login-action@v1 
+        with:
+          username: ${{ secrets.DOCKER_HUB_USERNAME }}
+          password: ${{ secrets.DOCKER_HUB_PASSWORD }}
+
+      # note: you should use ghcr.io instead of docker.pkg.github.com because the latest is in depreciation
+      # however i'm not able to get it to work reliably and it's still in beta
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v1
+        with:
+          registry: docker.pkg.github.com
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # Build docker image single platform for the tests
+      - name: Build debian image
+        uses: docker/build-push-action@v2
+        with:
+          context: .
+          file: ./Dockerfile
+          platforms: linux/amd64
+          push: false # don't push to registry
+          load: true # load the final result in the docker machine. note this does'nt (yet) work with multiple platforms defined.
+          cache-from: |
+            ${{ env.IMAGE_NAME }}:latest
+            ${{ env.IMAGE_NAME }}:debian
+          tags: |
+            ${{ env.IMAGE_NAME }}:latest
+            ${{ env.IMAGE_NAME }}:debian
+            ghcr.io/${{ github.repository }}:latest
+            ghcr.io/${{ github.repository }}:debian
+
+          labels: |
+            org.opencontainers.image.source=${{ env.gh_server_url }}/${{ github.repository }}
+            org.opencontainers.image.revision=${{ github.sha }}
+            org.opencontainers.image.created=${{ env.rfc_date }}
 
       - name: Test debian image
         run: tests/run $IMAGE_NAME:debian
 
+      # Build docker image single platform for the tests
       - name: Build alpine image
-        run: |
-          docker build . \
-            --pull=true \
-            --file=Dockerfile-alpine \
-            --tag="$IMAGE_NAME:alpine" \
-            --label="org.opencontainers.image.source=$GITHUB_SERVER_URL/$GITHUB_REPOSITORY" \
-            --label="org.opencontainers.image.revision=$GITHUB_SHA" \
-            --label="org.opencontainers.image.created=$(date --rfc-3339=seconds)"
+        uses: docker/build-push-action@v2
+        with:
+          context: .
+          file: ./Dockerfile-alpine
+          platforms: linux/amd64
+          push: false # don't push to registry
+          load: true # load the final result in the docker machine. note this does'nt (yet) work with multiple platforms defined.
+          cache-from: |
+            ${{ env.IMAGE_NAME }}:alpine
+          tags: |
+            ${{ env.IMAGE_NAME }}:alpine
+            ghcr.io/${{ github.repository }}:alpine
+          labels: |
+            org.opencontainers.image.source=${{ env.gh_server_url }}/${{ github.repository }}
+            org.opencontainers.image.revision=${{ github.sha }}
+            org.opencontainers.image.created=${{ env.rfc_date }}
 
       - name: Test alpine image
         run: tests/run $IMAGE_NAME:alpine
 
-      - name: Verify signature
+      # TODO set it back to on as it is working only on "atmoz" rempo
+      # - name: Verify signature
+      #   if: github.ref == 'refs/heads/master'
+      #   uses: atmoz/git-verify-ref@master
+      #   with:
+      #     import-github-users: atmoz
+
+      # Build & push docker image multi-platform
+      # note: the linux/amd64 image is not rebuilt, the cache is still present from the previous steps.
+      - name: Build & Push debian image to dockerhub
         if: github.ref == 'refs/heads/master'
-        uses: atmoz/git-verify-ref@master
+        uses: docker/build-push-action@v2
         with:
-          import-github-users: atmoz
+          context: .
+          file: ./Dockerfile
+          platforms: linux/386,linux/amd64,linux/arm/v6,linux/arm/v7,linux/arm64,linux/ppc64le,linux/s390x
+          push: true # push to registry
+          cache-from: |
+            ${{ env.IMAGE_NAME }}:latest
+            ${{ env.IMAGE_NAME }}:debian
+          tags: |
+            ${{ env.IMAGE_NAME }}:latest
+            ${{ env.IMAGE_NAME }}:debian
 
-      - name: Push images to Docker Hub registry
+          labels: |
+            org.opencontainers.image.source=${{ env.gh_server_url }}/${{ github.repository }}
+            org.opencontainers.image.revision=${{ github.sha }}
+            org.opencontainers.image.created=${{ env.rfc_date }}
+
+      # Build & push docker image multi-platform
+      - name: Build & Push alpine image to dockerhub
         if: github.ref == 'refs/heads/master'
-        run: |
-          echo "${{ secrets.DOCKER_HUB_PASSWORD }}" | docker login \
-            -u ${{ secrets.DOCKER_HUB_USERNAME }} --password-stdin
+        uses: docker/build-push-action@v2
+        with:
+          context: .
+          file: ./Dockerfile-alpine
+          platforms: linux/386,linux/amd64,linux/arm/v6,linux/arm/v7,linux/arm64,linux/ppc64le,linux/s390x
+          push: true # push to registry
+          cache-from: |
+            ${{ env.IMAGE_NAME }}:alpine
+          tags: |
+            ${{ env.IMAGE_NAME }}:alpine
 
-          docker push $IMAGE_NAME # no tags specified to include all tags
-          docker logout
-
+          labels: |
+            org.opencontainers.image.source=${{ env.gh_server_url }}/${{ github.repository }}
+            org.opencontainers.image.revision=${{ github.sha }}
+            org.opencontainers.image.created=${{ env.rfc_date }}
+      
+      # Push to github registry
       - name: Push images to GitHub registry
         if: github.ref == 'refs/heads/master'
         run: |
-          echo "${{ secrets.GITHUB_TOKEN }}" | docker login docker.pkg.github.com \
-            -u ${{ github.actor }} --password-stdin
-
           TAG_DEBIAN=docker.pkg.github.com/$GITHUB_REPOSITORY/debian
           TAG_ALPINE=docker.pkg.github.com/$GITHUB_REPOSITORY/alpine
           docker tag $IMAGE_NAME:debian $TAG_DEBIAN
           docker tag $IMAGE_NAME:alpine $TAG_ALPINE
           docker push $TAG_DEBIAN
           docker push $TAG_ALPINE
-          docker logout docker.pkg.github.com
-
