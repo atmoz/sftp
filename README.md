@@ -30,7 +30,10 @@ Easy to use SFTP ([SSH File Transfer Protocol](https://en.wikipedia.org/wiki/SSH
     own home directory, so make sure there are at least one subdirectory if you
     want them to upload files.
   - For consistent server fingerprint, mount your own host keys (i.e. `/etc/ssh/ssh_host_*`)
-
+- Assuming the directory you specify is `upload` and the user is `foo` (i.e. `foo:pass:::upload`) 
+  a log will appear when a file is written to that directory. It will look like 
+  `w       /home/foo/upload        test.txt` assuming the file uploaded is `test.txt`
+  
 # Examples
 
 ## Simplest docker run example

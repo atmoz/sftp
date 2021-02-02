@@ -92,6 +92,7 @@ fi
 
 if $startSshd; then
     log "Executing sshd"
+    inotifyd - /home/foo/upload:w &
     exec /usr/sbin/sshd -D -e
 else
     log "Executing $*"
