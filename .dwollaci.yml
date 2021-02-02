@@ -1,0 +1,22 @@
+stages:
+  build:
+    nodeLabel: sbt
+    steps:
+      - docker build -f Dockerfile-alpine .
+    filesToStash:
+      - '**'
+  dockerPublish:
+    dockerImages:
+      - imageName: logging-sftp-server
+        dockerfile: Dockerfile-alpine
+        context: .
+        buildArgs:
+          VCS_REF: '{{GIT_COMMIT}}'
+          VCS_URL: '{{GIT_URL}}'
+          BUILD_DATE: '{{DATE}}'
+          VERSION: '{{GIT_COMMIT}}'
+        destinations:
+          - registry: docker.dwolla.net/dwolla
+            tags:
+              - '{{GIT_COMMIT}}'
+              - latest

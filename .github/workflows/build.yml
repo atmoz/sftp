@@ -61,26 +61,3 @@ jobs:
         with:
           import-github-users: atmoz
 
-      - name: Push images to Docker Hub registry
-        if: github.ref == 'refs/heads/master'
-        run: |
-          echo "${{ secrets.DOCKER_HUB_PASSWORD }}" | docker login \
-            -u ${{ secrets.DOCKER_HUB_USERNAME }} --password-stdin
-
-          docker push $IMAGE_NAME # no tags specified to include all tags
-          docker logout
-
-      - name: Push images to GitHub registry
-        if: github.ref == 'refs/heads/master'
-        run: |
-          echo "${{ secrets.GITHUB_TOKEN }}" | docker login docker.pkg.github.com \
-            -u ${{ github.actor }} --password-stdin
-
-          TAG_DEBIAN=docker.pkg.github.com/$GITHUB_REPOSITORY/debian
-          TAG_ALPINE=docker.pkg.github.com/$GITHUB_REPOSITORY/alpine
-          docker tag $IMAGE_NAME:debian $TAG_DEBIAN
-          docker tag $IMAGE_NAME:alpine $TAG_ALPINE
-          docker push $TAG_DEBIAN
-          docker push $TAG_ALPINE
-          docker logout docker.pkg.github.com
-
