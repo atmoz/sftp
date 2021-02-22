@@ -64,6 +64,20 @@ sftp:
     command: foo:pass:1001
 ```
 
+Using the `SFTP_USERS` environment variable with multiple users:
+
+```
+sftp:
+    image: atmoz/sftp
+    volumes:
+        - <host-dir>/upload-one:/home/foo/upload
+        - <host-dir>/upload-two:/home/bar/upload
+    ports:
+        - "2222:22"
+    environment:
+        - SFTP_USERS=foo:pass1:1001 bar:pass2:1002
+```
+
 ### Logging in
 
 The OpenSSH server runs by default on port 22, and in this example, we are forwarding the container's port 22 to the host's port 2222. To log in with the OpenSSH client, run: `sftp -P 2222 foo@<host-ip>`
