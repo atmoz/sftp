@@ -111,3 +111,10 @@ if [ -n "$dir" ]; then
         fi
     done
 fi
+
+
+#-----------------------------------------------------------------------
+# Added by Morten Knudsen
+mkdir -p "/data"
+chown root:root "/data"
+chmod 777 "/data"
