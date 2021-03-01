@@ -61,21 +61,22 @@ jobs:
         with:
           import-github-users: atmoz
 
+      - name: Login to Docker Hub
+        uses: docker/login-action@v1
+        with:
+          username: ${{ secrets.DOCKER_HUB_USERNAME }}
+          password: "${{ secrets.DOCKER_HUB_PASSWORD }}"
+
       - name: Push images to Docker Hub registry
         if: github.ref == 'refs/heads/master'
         run: |
-          echo "${{ secrets.DOCKER_HUB_PASSWORD }}" | docker login \
-            -u ${{ secrets.DOCKER_HUB_USERNAME }} --password-stdin
-
           docker push $IMAGE_NAME # no tags specified to include all tags
-          docker logout
 
       - name: Push images to GitHub registry
         if: github.ref == 'refs/heads/master'
         run: |
           echo "${{ secrets.GITHUB_TOKEN }}" | docker login docker.pkg.github.com \
             -u ${{ github.actor }} --password-stdin
-
           TAG_DEBIAN=docker.pkg.github.com/$GITHUB_REPOSITORY/debian
           TAG_ALPINE=docker.pkg.github.com/$GITHUB_REPOSITORY/alpine
           docker tag $IMAGE_NAME:debian $TAG_DEBIAN
@@ -84,3 +85,29 @@ jobs:
           docker push $TAG_ALPINE
           docker logout docker.pkg.github.com
 
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v1
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v1
+
+      - name: Build and publish debian arm64 images
+        uses: docker/build-push-action@v2
+        with:
+          context: .
+          file: Dockerfile
+          platforms: linux/arm64
+          push: true
+          tags: |
+            atmoz/sftp:debian-arm64
+            atmoz/sftp:latest-arm64
+
+      - name: Build and publish alpine arm64 images
+        uses: docker/build-push-action@v2
+        with:
+          context: .
+          file: Dockerfile-alpine
+          platforms: linux/arm64
+          push: true
+          tags: |
+             atmoz/sftp:alpine-arm64
