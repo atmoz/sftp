@@ -85,6 +85,8 @@ bar:abc:1002:100
 baz:xyz:1003:100
 ```
 
+Tip: you **MUST** use LF for end of line and **NOT** CRLF
+
 ## Encrypted password
 
 Add `:e` behind password to mark it as encrypted. Use single quotes if using terminal.
