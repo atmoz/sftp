@@ -32,36 +32,44 @@ fi
 # Create users only on first run
 if [ ! -f "$userConfFinalPath" ]; then
     mkdir -p "$(dirname $userConfFinalPath)"
+    # Enable LDAP if requested
+    if [ -n "${ENABLE_LDAP}" ]
+    then
+      log "Enabling LDAP auth"
+      /usr/local/bin/enable_ldap
+      touch ${userConfFinalPath}
+    else
+      if [ -f "$userConfPath" ]; then
+          # Append mounted config to final config
+          grep -v -E "$reArgSkip" < "$userConfPath" > "$userConfFinalPath"
+      fi
 
-    if [ -f "$userConfPath" ]; then
-        # Append mounted config to final config
-        grep -v -E "$reArgSkip" < "$userConfPath" > "$userConfFinalPath"
-    fi
 
-    if $startSshd; then
-        # Append users from arguments to final config
-        for user in "$@"; do
-            echo "$user" >> "$userConfFinalPath"
-        done
-    fi
+      if $startSshd; then
+          # Append users from arguments to final config
+          for user in "$@"; do
+              echo "$user" >> "$userConfFinalPath"
+          done
+      fi
 
-    if [ -n "$SFTP_USERS" ]; then
-        # Append users from environment variable to final config
-        IFS=" " read -r -a usersFromEnv <<< "$SFTP_USERS"
-        for user in "${usersFromEnv[@]}"; do
-            echo "$user" >> "$userConfFinalPath"
-        done
-    fi
+      if [ -n "$SFTP_USERS" ]; then
+          # Append users from environment variable to final config
+          IFS=" " read -r -a usersFromEnv <<< "$SFTP_USERS"
+          for user in "${usersFromEnv[@]}"; do
+              echo "$user" >> "$userConfFinalPath"
+          done
+      fi
 
-    # Check that we have users in config
-    if [ -f "$userConfFinalPath" ] && [ "$(wc -l < "$userConfFinalPath")" -gt 0 ]; then
-        # Import users from final conf file
-        while IFS= read -r user || [[ -n "$user" ]]; do
-            create-sftp-user "$user"
-        done < "$userConfFinalPath"
-    elif $startSshd; then
-        log "FATAL: No users provided!"
-        exit 3
+      # Check that we have users in config
+      if [ -f "$userConfFinalPath" ] && [ "$(wc -l < "$userConfFinalPath")" -gt 0 ]; then
+          # Import users from final conf file
+          while IFS= read -r user || [[ -n "$user" ]]; do
+              create-sftp-user "$user"
+          done < "$userConfFinalPath"
+      elif $startSshd; then
+          log "FATAL: No users provided!"
+          exit 3
+      fi
     fi
 
     # Generate unique ssh keys for this container, if needed

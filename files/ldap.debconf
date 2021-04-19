@@ -1,0 +1,14 @@
+nslcd nslcd/ldap-binddn  string
+nslcd nslcd/ldap-bindpw   password
+nslcd nslcd/ldap-base string
+nslcd nslcd/ldap-uris string
+nslcd libraries/restart-without-asking: boolean true
+nslcd nslcd/ldap-auth-type    select  simple
+nslcd nslcd/ldap-starttls     boolean false
+nslcd nslcd/ldap-reqcert      select  never
+libpam-runtime        libpam-runtime/profiles multiselect     ccreds-save, unix, ldap, mkhomedir , ccreds-check
+libnss-ldapd  libnss-ldapd/nsswitch   multiselect     group, passwd, shadow
+libnss-ldapd  libnss-ldapd/clean_nsswitch     boolean false
+libnss-ldapd:amd64    libnss-ldapd/nsswitch   multiselect     group, passwd, shadow
+libnss-ldapd:amd64    libnss-ldapd/clean_nsswitch     boolean false
+
