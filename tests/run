@@ -1,29 +1,38 @@
 #!/bin/bash
 # See: https://github.com/kward/shunit2
 
+argImage=$1
+argOutput=${2:-"quiet"}
+argCleanup=${3:-"cleanup"}
+testDir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+imageName="$argImage"
+tmpDir="$(mktemp -d /tmp/atmoz_sftp_XXXX)"
+sshKeyPri="$tmpDir/rsa"
+sshKeyPub="$tmpDir/rsa.pub"
+sshHostEd25519Key="$tmpDir/ssh_host_ed25519_key"
+sshHostKeyMountArg="--volume=$sshHostEd25519Key:/etc/ssh/ssh_host_ed25519_key"
+sshKnownHosts="$tmpDir/known_hosts"
+
 if [ $UID != 0 ] && ! groups | grep -qw docker; then
     echo "Run with sudo/root or add user $USER to group 'docker'"
     exit 1
 fi
 
-argBuild=${1:-"build"}
-argOutput=${2:-"quiet"}
-argCleanup=${3:-"cleanup"}
-testDir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-buildDir="$testDir/.."
-imageName="atmoz/sftp_test"
-buildOptions=(--tag "$imageName")
+if [ ! -f "$testDir/shunit2/shunit2" ]; then
+    echo "Could not find shunit2 in $testDir/shunit2."
+    echo "Run 'git submodule update --init'"
+    exit 2
+fi
+
+if [ -z "$argImage" ]; then
+    echo "Missing image name"
+    exit 3
+fi
 
 if [ "$argOutput" == "quiet" ]; then
     redirect="/dev/null"
 else
     redirect="/dev/stdout"
-fi
-
-if [ ! -f "$testDir/shunit2/shunit2" ]; then
-    echo "Could not find shunit2 in $testDir/shunit2."
-    echo "Run 'git submodules init && git submodules update'"
-    exit 2
 fi
 
 # clear argument list (or shunit2 will try to use them)
@@ -34,29 +43,16 @@ set --
 ##############################################################################
 
 function oneTimeSetUp() {
-    if [ "$argBuild" == "build" ]; then
-        buildOptions+=("--no-cache" "--pull=true")
-    fi
-
-    # Build image
-    if ! docker build "${buildOptions[@]}" "$buildDir"; then
-        echo "Build failed"
-        exit 1
-    fi
-
     # Generate temporary ssh keys for testing
-    if [ ! -f "/tmp/atmoz_sftp_test_rsa" ]; then
-        ssh-keygen -t rsa -f "/tmp/atmoz_sftp_test_rsa" -N '' > "$redirect" 2>&1
+    if [ ! -f "$sshKeyPri" ]; then
+        ssh-keygen -t rsa -f "$sshKeyPri" -N '' > "$redirect" 2>&1
     fi
 
     # Private key can not be read by others (sshd will complain)
-    chmod go-rw "/tmp/atmoz_sftp_test_rsa"
-}
+    chmod go-rw "$sshKeyPri"
 
-function oneTimeTearDown() {
-    if [ "$argCleanup" == "cleanup" ]; then
-        docker image rm "$imageName" > "$redirect" 2>&1
-    fi
+    # Generate host key
+    ssh-keygen -t ed25519 -f "$sshHostEd25519Key" < /dev/null
 }
 
 function setUp() {
@@ -72,7 +68,7 @@ function tearDown() {
     retireContainer "$containerName"
 
     if [ "$argCleanup" == "cleanup" ] && [ -d "$containerTmpDir" ]; then
-        rm -rf "$containerTmpDir"
+        rm -rf "$containerTmpDir" || true # Can fail on GitHub Actions
     fi
 }
 
@@ -98,15 +94,16 @@ function runSftpCommands() {
     user="$2"
     shift 2
 
+    echo "$ip $(cat "$sshHostEd25519Key.pub")" >> "$sshKnownHosts"
+
     commands=""
     for cmd in "$@"; do
         commands="$commands$cmd"$'\n'
     done
 
     echo "$commands" | sftp \
-        -i "/tmp/atmoz_sftp_test_rsa" \
-        -oStrictHostKeyChecking=no \
-        -oUserKnownHostsFile=/dev/null \
+        -i "$sshKeyPri" \
+        -oUserKnownHostsFile="$sshKnownHosts" \
         -b - "$user@$ip" \
         > "$redirect" 2>&1
 
@@ -138,7 +135,7 @@ function waitForServer() {
 ##############################################################################
 
 function testSmallestUserConfig() {
-    docker run --name "$containerName" \
+    docker run --name "$containerName" "$sshHostKeyMountArg" \
         --entrypoint="/bin/sh" \
         "$imageName" \
         -c "create-sftp-user u: && id u" \
@@ -147,7 +144,7 @@ function testSmallestUserConfig() {
 }
 
 function testCreateUserWithDot() {
-    docker run --name "$containerName" \
+    docker run --name "$containerName" "$sshHostKeyMountArg" \
         --entrypoint="/bin/sh" \
         "$imageName" \
         -c "create-sftp-user user.with.dot: && id user.with.dot" \
@@ -156,7 +153,7 @@ function testCreateUserWithDot() {
 }
 
 function testUserCustomUidAndGid() {
-    id="$(docker run --name "$containerName" \
+    id="$(docker run --name "$containerName" "$sshHostKeyMountArg" \
         --entrypoint="/bin/sh" \
         "$imageName" \
         -c "create-sftp-user u::1234:4321: > /dev/null && id u" )"
@@ -172,14 +169,14 @@ function testUserCustomUidAndGid() {
 }
 
 function testCommandPassthrough() {
-    docker run --name "$containerName" \
+    docker run --name "$containerName" "$sshHostKeyMountArg" \
         "$imageName" test 1 -eq 1 \
         > "$redirect" 2>&1
     assertTrue "command passthrough" $?
 }
 
 function testUsersConf() {
-    docker run --name "$containerName" -d \
+    docker run --name "$containerName" "$sshHostKeyMountArg" -d \
         -v "$testDir/files/users.conf:/etc/sftp/users.conf:ro" \
         "$imageName" \
         > "$redirect" 2>&1
@@ -201,7 +198,7 @@ function testUsersConf() {
 }
 
 function testLegacyUsersConf() {
-    docker run --name "$containerName" -d \
+    docker run --name "$containerName" "$sshHostKeyMountArg" -d \
         -v "$testDir/files/users.conf:/etc/sftp-users.conf:ro" \
         "$imageName" \
         > "$redirect" 2>&1
@@ -214,7 +211,7 @@ function testLegacyUsersConf() {
 }
 
 function testCreateUsersUsingEnv() {
-    docker run --name "$containerName" -d \
+    docker run --name "$containerName" "$sshHostKeyMountArg" -d \
         -e "SFTP_USERS=user-from-env: user-from-env-2:" \
         "$imageName" \
         > "$redirect" 2>&1
@@ -230,7 +227,7 @@ function testCreateUsersUsingEnv() {
 }
 
 function testCreateUsersUsingCombo() {
-    docker run --name "$containerName" -d \
+    docker run --name "$containerName" "$sshHostKeyMountArg" -d \
         -v "$testDir/files/users.conf:/etc/sftp-users.conf:ro" \
         -e "SFTP_USERS=user-from-env:" \
         "$imageName" \
@@ -251,8 +248,8 @@ function testCreateUsersUsingCombo() {
 }
 
 function testWriteAccessToAutocreatedDirs() {
-    docker run --name "$containerName" -d \
-        -v "/tmp/atmoz_sftp_test_rsa.pub":/home/test/.ssh/keys/id_rsa.pub:ro \
+    docker run --name "$containerName" "$sshHostKeyMountArg" -d \
+        -v "$sshKeyPub":/home/test/.ssh/keys/id_rsa.pub:ro \
         "$imageName" "test::::testdir,dir with spaces" \
         > "$redirect" 2>&1
 
@@ -274,6 +271,41 @@ function testWriteAccessToAutocreatedDirs() {
     assertTrue "dir with spaces write access" $?
 }
 
+function testWriteAccessToLimitedChroot() {
+    # Modified sshd_config with chrooted home subdir
+    tmpConfig="$(mktemp)"
+    sed 's/^ChrootDirectory.*/ChrootDirectory %h\/sftp/' \
+        < "$testDir/../files/sshd_config" > "$tmpConfig"
+
+    # Set correct permissions on chroot
+    tmpScript="$(mktemp)"
+    cat > "$tmpScript" <<EOF
+mkdir -p /home/*/sftp
+chown root:root /home/*/sftp
+chmod 755 /home/*/sftp
+EOF
+    chmod +x "$tmpScript"
+
+    docker run --name "$containerName" "$sshHostKeyMountArg" -d \
+        -v "$sshKeyPub":/home/test/.ssh/keys/id_rsa.pub:ro \
+        -v "$tmpConfig:/etc/ssh/sshd_config" \
+        -v "$tmpScript:/etc/sftp.d/limited_home_dir" \
+        "$imageName" "test::::sftp/upload" \
+        > "$redirect" 2>&1
+
+    waitForServer "$containerName"
+    assertTrue "waitForServer" $?
+
+    runSftpCommands "$containerName" "test" \
+        "cd upload" \
+        "mkdir test" \
+        "exit"
+    assertTrue "runSftpCommands" $?
+
+    docker exec "$containerName" test -d /home/test/sftp/upload/test
+    assertTrue "limited chroot write access" $?
+}
+
 function testBindmountDirScript() {
     mkdir -p "$containerTmpDir/custom/bindmount"
     echo "mkdir -p /home/custom/bindmount && \
@@ -282,9 +314,9 @@ function testBindmountDirScript() {
         > "$containerTmpDir/mount.sh"
     chmod +x "$containerTmpDir/mount.sh"
 
-    docker run --name "$containerName" -d \
+    docker run --name "$containerName" "$sshHostKeyMountArg" -d \
         --privileged=true \
-        -v "/tmp/atmoz_sftp_test_rsa.pub":/home/custom/.ssh/keys/id_rsa.pub:ro \
+        -v "$sshKeyPub":/home/custom/.ssh/keys/id_rsa.pub:ro \
         -v "$containerTmpDir/custom/bindmount":/custom \
         -v "$containerTmpDir/mount.sh":/etc/sftp.d/mount.sh \
         "$imageName" custom:123 \
@@ -301,6 +333,21 @@ function testBindmountDirScript() {
 
     docker exec "$containerName" test -d /home/custom/bindmount/test
     assertTrue "directory exist" $?
+}
+
+function testDuplicateSshKeys() {
+    docker run --name "$containerName" "$sshHostKeyMountArg" -d \
+        -v "$sshKeyPub":/home/user/.ssh/keys/key1.pub:ro \
+        -v "$sshKeyPub":/home/user/.ssh/keys/key2.pub:ro \
+        "$imageName" "user:" \
+        > "$redirect" 2>&1
+
+    waitForServer "$containerName"
+    assertTrue "waitForServer" $?
+
+    lines="$(docker exec "$containerName" sh -c \
+        "wc -l < /home/user/.ssh/authorized_keys")"
+    assertEquals "1" "$lines"
 }
 
 ##############################################################################

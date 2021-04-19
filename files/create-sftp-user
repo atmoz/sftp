@@ -81,12 +81,20 @@ else
 fi
 
 # Add SSH keys to authorized_keys with valid permissions
-if [ -d "/home/$user/.ssh/keys" ]; then
-    for publickey in "/home/$user/.ssh/keys"/*; do
-        cat "$publickey" >> "/home/$user/.ssh/authorized_keys"
+userKeysQueuedDir="/home/$user/.ssh/keys"
+if [ -d "$userKeysQueuedDir" ]; then
+    userKeysAllowedFileTmp="$(mktemp)"
+    userKeysAllowedFile="/home/$user/.ssh/authorized_keys"
+
+    for publickey in "$userKeysQueuedDir"/*; do
+        cat "$publickey" >> "$userKeysAllowedFileTmp"
     done
-    chown "$uid" "/home/$user/.ssh/authorized_keys"
-    chmod 600 "/home/$user/.ssh/authorized_keys"
+
+    # Remove duplicate keys
+    sort < "$userKeysAllowedFileTmp" | uniq > "$userKeysAllowedFile"
+
+    chown "$uid" "$userKeysAllowedFile"
+    chmod 600 "$userKeysAllowedFile"
 fi
 
 # Make sure dirs exists
