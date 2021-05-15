@@ -354,6 +354,6 @@ function testDuplicateSshKeys() {
 ## Run
 ##############################################################################
 
-# shellcheck disable=SC1090
+# shellcheck disable=SC1091
 source "$testDir/shunit2/shunit2"
 # Nothing happens after this
