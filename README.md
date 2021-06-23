@@ -1,6 +1,8 @@
 # SFTP
 
-![GitHub Workflow Status](https://img.shields.io/github/workflow/status/atmoz/sftp/build?logo=github) ![GitHub stars](https://img.shields.io/github/stars/atmoz/sftp?logo=github) ![Docker Stars](https://img.shields.io/docker/stars/atmoz/sftp?label=stars&logo=docker) ![Docker Pulls](https://img.shields.io/docker/pulls/atmoz/sftp?label=pulls&logo=docker)
+[![GitHub Workflow Status](https://img.shields.io/github/workflow/status/atmoz/sftp/build?logo=github)](https://github.com/atmoz/sftp/actions/workflows/build.yml?query=branch%3Amaster)
+![GitHub stars](https://img.shields.io/github/stars/atmoz/sftp?logo=github)
+[![Docker Stars](https://img.shields.io/docker/stars/atmoz/sftp?label=stars&logo=docker) ![Docker Pulls](https://img.shields.io/docker/pulls/atmoz/sftp?label=pulls&logo=docker)](https://hub.docker.com/r/atmoz/sftp)
 
 ![OpenSSH logo](https://raw.githubusercontent.com/atmoz/sftp/master/openssh.png "Powered by OpenSSH")
 
