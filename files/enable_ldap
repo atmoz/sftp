@@ -1,0 +1,38 @@
+#!/bin/bash
+
+for f in pam_script_ses_close pam_script_ses_open
+do
+  ln -s /usr/share/libpam-script/ldap-pam-script.sh /usr/share/libpam-script/$f
+done
+
+pam-auth-update --package
+
+cat <<EOF > /etc/nslcd.conf
+uid nslcd
+gid nslcd
+binddn ${LDAP_BINDDN}
+bindpw ${LDAP_BINDPW}
+uri ${LDAP_URI}
+base  ${LDAP_SEARCH_BASE}
+tls_reqcert never
+tls_cacertfile /etc/ssl/certs/ca-certificates.crt
+pagesize 1000
+referrals off
+filter passwd (&(objectClass=user)(!(objectClass=computer))(uidNumber=*)(unixHomeDirectory=*))
+map    passwd uid              sAMAccountName
+map    passwd homeDirectory    unixHomeDirectory
+map    passwd gecos            displayName
+filter shadow (&(objectClass=user)(!(objectClass=computer))(uidNumber=*)(unixHomeDirectory=*))
+map    shadow uid              sAMAccountName
+map    shadow shadowLastChange pwdLastSet
+filter group  (objectClass=group)
+EOF
+
+echo "UsePAM yes" >> /etc/ssh/sshd_config
+[[ -n "${LDAP_ALLOWGROUPS}" ]] && echo "AllowGroups ${LDAP_ALLOWGROUPS}" >> /etc/ssh/sshd_config
+
+if ! nslcd -c
+then
+  nslcd
+fi
+

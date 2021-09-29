@@ -31,6 +31,20 @@ Easy to use SFTP ([SSH File Transfer Protocol](https://en.wikipedia.org/wiki/SSH
     want them to upload files.
   - For consistent server fingerprint, mount your own host keys (i.e. `/etc/ssh/ssh_host_*`)
 
+## Using LDAP
+To use LDAP set the following environment variables:
+
+- `ENABLE_LDAP` (Value doesn't matter, just needs to be set)
+- `LDAP_BINDDN`
+- `LDAP_BINDPW`
+- `LDAP_SEARCH_BASE`
+- `LDAP_URI`
+- `LDAP_ALLOWEDGROUPS` (if set, only listed groups will be allowed access)
+
+Note: `SFTP_USERS` variable is ignored, this means additional directories are
+not created. In the users home directory (which is r/w for root only), `sftp`
+directory is created. The user will have r/w the sftp directory.
+
 # Examples
 
 ## Simplest docker run example
@@ -96,7 +110,7 @@ docker run \
     'foo:$1$0G2g0GSt$ewU0t6GXG15.0hWoOX8X9.:e:1001'
 ```
 
-Tip: you can use [atmoz/makepasswd](https://hub.docker.com/r/atmoz/makepasswd/) to generate encrypted passwords:  
+Tip: you can use [atmoz/makepasswd](https://hub.docker.com/r/atmoz/makepasswd/) to generate encrypted passwords:
 `echo -n "your-password" | docker run -i --rm atmoz/makepasswd --crypt-md5 --clearfrom=-`
 
 ## Logging in with SSH keys
