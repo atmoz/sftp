@@ -87,7 +87,7 @@ if [ -d "$userKeysQueuedDir" ]; then
     userKeysAllowedFile="/home/$user/.ssh/authorized_keys"
 
     for publickey in "$userKeysQueuedDir"/*; do
-        cat "$publickey" >> "$userKeysAllowedFileTmp"
+        echo -e "$(cat "$publickey")" >> "$userKeysAllowedFileTmp"
     done
 
     # Remove duplicate keys
