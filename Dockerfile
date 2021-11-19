@@ -1,4 +1,4 @@
-FROM debian:buster
+FROM debian:VERSION
 MAINTAINER Adrian Dvergsdal [atmoz.net]
 
 # Steps done in one RUN layer:
