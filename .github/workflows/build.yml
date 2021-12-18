@@ -26,7 +26,7 @@ jobs:
       - name: Run ShellCheck
         uses: ludeeus/action-shellcheck@master
         with:
-          ignore_names: shunit2
+          ignore_paths: tests/shunit2
 
       - name: Build debian image
         run: |
