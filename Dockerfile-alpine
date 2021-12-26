@@ -1,4 +1,4 @@
-FROM alpine:latest
+FROM alpine:VERSION
 MAINTAINER Adrian Dvergsdal [atmoz.net]
 
 # Steps done in one RUN layer:
