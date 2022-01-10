@@ -52,6 +52,12 @@ if [ ! -f "$userConfFinalPath" ]; then
             echo "$user" >> "$userConfFinalPath"
         done
     fi
+	
+	if [ -n "$READONLY" ]; then
+        if [ "$READONLY" = "true" ]; then
+			sed 's/Subsystem sftp internal-sftp/Subsystem sftp internal-sftp -R/' "/etc/ssh/sshd_config" | tee "/etc/ssh/sshd_config"
+		fi
+    fi
 
     # Check that we have users in config
     if [ -f "$userConfFinalPath" ] && [ "$(wc -l < "$userConfFinalPath")" -gt 0 ]; then
