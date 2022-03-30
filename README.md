@@ -122,7 +122,6 @@ docker run \
     -v <host-dir>/ssh_host_rsa_key:/etc/ssh/ssh_host_rsa_key \
     -v <host-dir>/ssh_host_ed25519_key.pub:/home/foo/.ssh/keys/ssh_host_ed25519_key.pub:ro \
     -v <host-dir>/ssh_host_rsa_key.pub:/home/foo/.ssh/keys/ssh_host_rsa_key.pub:ro \
-    -v <host-dir>/sftp_home:/home/foo/share \
     -v <host-dir>/share:/home/foo/share \
     -p 2222:22 -d atmoz/sftp \
     foo::1001
