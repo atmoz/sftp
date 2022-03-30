@@ -136,9 +136,9 @@ ssh-keygen -t rsa -b 4096 -f ssh_host_rsa_key < /dev/null
 ```
  
 Test it with:
-  
+  ```
  sftp -P 2222 -i <host-dir>/ssh_host_ed25519_key -oStrictHostKeyChecking=no -oUserKnownHostsFile=/dev/null foo@localhost
-  
+  ```
 ## Execute custom scripts or applications
 
 Put your programs in `/etc/sftp.d/` and it will automatically run when the container starts.
