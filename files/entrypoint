@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/bash -x
 
 set -Eeo pipefail
 
@@ -14,6 +14,7 @@ if [ "$1" == "sshd" ]; then
     do
       mkdir -p ${SFTP_FILES_PATH}/${provider}/files
       ln -s ${SFTP_FILES_PATH}/${provider}/files /home/${provider}/
+    done
   fi
 
   # shellcheck disable=2154
