@@ -6,12 +6,15 @@ env:
   GCP_PROJECT: demarque
   IMAGE: sftp
   TARGET_ENV: staging
-  NA_GCR_HOSTNAME: gcr.io
+  GCR_HOSTNAME: gcr.io
 
 jobs:
   setup-build-publish-deploy:
     name: Setup, Build, Publish
     runs-on: ubuntu-20.04
+
+    outputs:
+      digest-output: ${{ steps.get-digest.outputs.digest }}
 
     steps:
     - name: Checkout
@@ -32,11 +35,14 @@ jobs:
 
     - name: Build staging docker image
       run: |
-        docker build -t $NA_GCR_HOSTNAME/$GCP_PROJECT/$IMAGE:$GITHUB_SHA .
+        docker build -t $GCR_HOSTNAME/$GCP_PROJECT/$IMAGE:$GITHUB_SHA .
 
     - name: Push docker image
       run: |
-        docker push $NA_GCR_HOSTNAME/$GCP_PROJECT/$IMAGE:$GITHUB_SHA
+        docker push $GCR_HOSTNAME/$GCP_PROJECT/$IMAGE:$GITHUB_SHA
+
+    - id: get-digest
+      run: echo "::set-output name=digest::$(docker inspect --format='{{index (split (index .RepoDigests 0) "@") 1}}' $GCR_HOSTNAME/$GCP_PROJECT/$IMAGE:$GITHUB_SHA)"
 
   create-infra-pr:
     name: Create infra PR
@@ -55,6 +61,7 @@ jobs:
       run: |
         cd infra
         sed -i 's/  tag: [a-zA-Z0-9]*/  tag: '${GITHUB_SHA}'/g' modules/market/base/charts/sftp/${TARGET_ENV}-*.yaml
+        sed -i 's/  digest: sha256:[a-zA-Z0-9]*/  digest: '${{needs.setup-build-publish-deploy.outputs.digest-output}}'/g' modules/market/base/charts/sftp/${TARGET_ENV}-*.yaml
 
     - name: Open infra PR
       uses: peter-evans/create-pull-request@v3.4.1
