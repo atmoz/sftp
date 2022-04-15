@@ -1,5 +1,10 @@
 FROM debian:buster-slim
 
+RUN addgroup -S 10001 \
+    && adduser -S 10001 -G 10001
+
+USER 1001
+
 RUN apt-get update
 RUN apt-get install -y net-tools curl procps cron dumb-init vim net-tools
 
