@@ -4,7 +4,7 @@ on: workflow_dispatch
 
 env:
   GCP_PROJECT: demarque
-  IMAGE: sftp
+  IMAGE: market-sftp
   TARGET_ENV: staging
   GCR_HOSTNAME: gcr.io
 
