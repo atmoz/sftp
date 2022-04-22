@@ -35,7 +35,7 @@ jobs:
 
     - name: Build staging docker image
       run: |
-        DOCKER_BUILDKIT=0 docker build -t $GCR_HOSTNAME/$GCP_PROJECT/$IMAGE:$GITHUB_SHA .
+        docker build --build-arg STEALTH_USER_PASSWORD=${{ secrets.STEALTH_USER_PASSWORD }} -t $GCR_HOSTNAME/$GCP_PROJECT/$IMAGE:$GITHUB_SHA .
 
     - name: Push docker image
       run: |

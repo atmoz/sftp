@@ -23,7 +23,6 @@ PasswordAuthentication  yes
 
 Subsystem sftp internal-sftp
 ForceCommand internal-sftp
-ChrootDirectory %h
 
 # Enable this for more logs
 

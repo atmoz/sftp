@@ -4,15 +4,7 @@ cp -L /etc/secrets/ssh_host_ed25519_key /etc/ssh/ssh_host_ed25519_key
 cp -L /etc/secrets/ssh_host_rsa_key /etc/ssh/ssh_host_rsa_key
 chmod 600 /etc/ssh/ssh_host_rsa_key /etc/ssh/ssh_host_ed25519_key
 
-function log() {
-    echo "[$0] $*" >&2
-}
-
-# su - sftp
-sudo chown -R stealth.stealth /home/stealth
-
 if [ "$1" == "sshd" ]; then
-  log "Executing sshd"
   exec /usr/sbin/sshd -D -e
 else
   exec "$@"
