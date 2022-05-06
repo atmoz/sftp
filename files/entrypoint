@@ -4,6 +4,8 @@ cp -L /etc/secrets/ssh_host_ed25519_key /etc/ssh/ssh_host_ed25519_key
 cp -L /etc/secrets/ssh_host_rsa_key /etc/ssh/ssh_host_rsa_key
 chmod 600 /etc/ssh/ssh_host_rsa_key /etc/ssh/ssh_host_ed25519_key
 
+mkdir -p home/stealth/files
+
 if [ "$1" == "sshd" ]; then
   exec /usr/sbin/sshd -D -e
 else
