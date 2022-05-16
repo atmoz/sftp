@@ -17,77 +17,81 @@ jobs:
       digest-output: ${{ steps.get-digest.outputs.digest }}
 
     steps:
-    - name: Checkout
-      uses: actions/checkout@v2
+      - name: Checkout Repository
+        uses: actions/checkout@v2
 
-    - id: 'auth'
-      uses: 'google-github-actions/auth@v0'
-      with:
-        credentials_json: ${{ secrets.GCP_SA_KEY_DEMARQUE }}
-        project_id: ${{ secrets.GCP_PROJECT }}
+      - name: GCloud Authentification
+        uses: "google-github-actions/auth@v0"
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY_DEMARQUE }}
+          project_id: ${{ secrets.GCP_PROJECT }}
 
-    - name: 'Set up Cloud SDK'
-      uses: 'google-github-actions/setup-gcloud@v0'
+      - name: Setup Cloud SDK
+        uses: "google-github-actions/setup-gcloud@v0"
 
-    - name: Google cloud docker auth
-      run: |-
-        gcloud auth configure-docker
+      - name: Google Cloud Docker Auth
+        run: |-
+          gcloud auth configure-docker
 
-    - name: Build staging docker image
-      run: |
-        docker build --build-arg STEALTH_USER_PASSWORD=${{ secrets.STEALTH_USER_PASSWORD }} -t $GCR_HOSTNAME/$GCP_PROJECT/$IMAGE:$GITHUB_SHA .
+      - name: Build Staging Docker Image
+        run: |
+          docker build --build-arg STEALTH_USER_PASSWORD=${{ secrets.STEALTH_USER_PASSWORD }} -t $GCR_HOSTNAME/$GCP_PROJECT/$IMAGE:$GITHUB_SHA .
 
-    - name: Push docker image
-      run: |
-        docker push $GCR_HOSTNAME/$GCP_PROJECT/$IMAGE:$GITHUB_SHA
+      - name: Push Docker Image
+        run: |
+          docker push $GCR_HOSTNAME/$GCP_PROJECT/$IMAGE:$GITHUB_SHA
 
-    - id: get-digest
-      run: echo "::set-output name=digest::$(docker inspect --format='{{index (split (index .RepoDigests 0) "@") 1}}' $GCR_HOSTNAME/$GCP_PROJECT/$IMAGE:$GITHUB_SHA)"
+      - name: Get Digest
+        id: get-digest
+        run: echo "::set-output name=digest::$(docker inspect --format='{{index (split (index .RepoDigests 0) "@") 1}}' $GCR_HOSTNAME/$GCP_PROJECT/$IMAGE:$GITHUB_SHA)"
 
   create-infra-pr:
     name: Create infra PR
     runs-on: ubuntu-20.04
     needs: setup-build-publish-deploy
     steps:
-    - name: Checkout infra
-      uses: actions/checkout@master
-      with:
-        repository: demarque/demarque-infra
-        token: ${{ secrets.GH_CI_CD_TOKEN }}
-        ref: env/staging
-        path: infra
+      - name: Checkout Repository
+        uses: actions/checkout@master
+        with:
+          repository: demarque/demarque-infra
+          token: ${{ secrets.GH_CI_CD_TOKEN }}
+          ref: env/staging
+          path: infra
 
-    - name: Update helm chart values
-      run: |
-        cd infra
-        sed -i 's/  tag: [a-zA-Z0-9]*/  tag: '${GITHUB_SHA}'/g' modules/market/base/charts/sftp/${TARGET_ENV}-*.yaml
-        sed -i 's/  digest: sha256:[a-zA-Z0-9]*/  digest: '${{needs.setup-build-publish-deploy.outputs.digest-output}}'/g' modules/market/base/charts/sftp/${TARGET_ENV}-*.yaml
+      - name: Update Helm Chart Values
+        run: |
+          cd infra
+          sed -i 's/  tag: [a-zA-Z0-9]*/  tag: '${GITHUB_SHA}'/g' modules/market/base/charts/sftp/${TARGET_ENV}-*.yaml
+          sed -i 's/  digest: sha256:[a-zA-Z0-9]*/  digest: '${{needs.setup-build-publish-deploy.outputs.digest-output}}'/g' modules/market/base/charts/sftp/${TARGET_ENV}-*.yaml
 
-    - name: Open infra PR
-      uses: peter-evans/create-pull-request@v3.4.1
-      with:
-        token: ${{ secrets.GH_CI_CD_TOKEN }}
-        path: infra
-        committer: Github Actions <infra@demarque.com>
-        author: Github Actions <infra@demarque.com>
-        branch: deploy/${{ env.TARGET_ENV }}/${{ github.sha }}
-        commit-message: "chore: ${{ env.TARGET_ENV }} - deploy ${{ github.event.repository.name }} ${{ github.sha }}"
-        title: ${{ env.TARGET_ENV }} - deploy ${{ github.event.repository.name }} ${{ github.sha }}
-        body: ${{ env.TARGET_ENV }} - deploy ${{ github.event.repository.name }} ${{ github.sha }}
-        labels: automerge
+      - name: Open Infra PR
+        uses: peter-evans/create-pull-request@v3.4.1
+        with:
+          token: ${{ secrets.GH_CI_CD_TOKEN }}
+          path: infra
+          committer: Github Actions <infra@demarque.com>
+          author: Github Actions <infra@demarque.com>
+          branch: deploy/${{ env.TARGET_ENV }}/${{ github.sha }}
+          commit-message: "chore: ${{ env.TARGET_ENV }} - deploy ${{ github.event.repository.name }} ${{ github.sha }}"
+          title: ${{ env.TARGET_ENV }} - deploy ${{ github.event.repository.name }} ${{ github.sha }}
+          body: ${{ env.TARGET_ENV }} - deploy ${{ github.event.repository.name }} ${{ github.sha }}
+          labels: automerge
 
   finalize:
     name: Finalize
     runs-on: ubuntu-20.04
     needs: create-infra-pr
+    if: ${{ always() }}
 
     steps:
-    - name: Notify
-      uses: 8398a7/action-slack@v3
-      with:
-        status: ${{ job.status }}
-        fields: repo,message,commit,author,action,eventName,ref,workflow
-      env:
-        GITHUB_TOKEN: ${{ secrets.GH_CI_CD_TOKEN }}
-        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
-      if: always()
+      - name: Fetch Workflow Conclusion
+        uses: technote-space/workflow-conclusion-action@v2
+
+      - name: Notify
+        uses: 8398a7/action-slack@v3
+        with:
+          status: ${{ env.WORKFLOW_CONCLUSION }}
+          fields: repo,message,commit,author,action,eventName,ref,workflow
+        env:
+          GITHUB_TOKEN: ${{ secrets.GH_CI_CD_TOKEN }}
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
