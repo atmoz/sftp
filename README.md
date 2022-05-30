@@ -1,4 +1,6 @@
-# SFTP
+# Market SFTP
+
+[![Checkov](https://github.com/demarque/market/actions/workflows/checkov-analysis.yaml/badge.svg)](https://github.com/demarque/market/actions/workflows/checkov-analysis.yaml)
 
 ![OpenSSH logo](https://raw.githubusercontent.com/atmoz/sftp/master/openssh.png "Powered by OpenSSH")
 
@@ -53,7 +55,7 @@ docker run \
     foo:pass:1001
 ```
 
-### Using Docker Compose:
+### Using Docker Compose
 
 ```
 sftp:
@@ -97,7 +99,7 @@ docker run \
     'foo:$1$0G2g0GSt$ewU0t6GXG15.0hWoOX8X9.:e:1001'
 ```
 
-Tip: you can use [atmoz/makepasswd](https://hub.docker.com/r/atmoz/makepasswd/) to generate encrypted passwords:  
+Tip: you can use [atmoz/makepasswd](https://hub.docker.com/r/atmoz/makepasswd/) to generate encrypted passwords:
 `echo -n "your-password" | docker run -i --rm atmoz/makepasswd --crypt-md5 --clearfrom=-`
 
 ## Logging in with SSH keys
