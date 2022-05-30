@@ -1,0 +1,11 @@
+name: Checkov
+on: push
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+      - name: Test with Checkov
+        id: checkov
+        uses: bridgecrewio/checkov-action@master
