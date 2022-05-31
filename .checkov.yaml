@@ -10,6 +10,3 @@ skip-check:
 
   # Ensure that HEALTHCHECK instructions have been added to container images
   - CKV_DOCKER_2
-
-  # Ensure port 22 is not exposed
-  - CKV_DOCKER_1

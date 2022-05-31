@@ -29,3 +29,5 @@ ForceCommand internal-sftp
 # LogLevel VERBOSE
 
 PidFile /tmp/sshd.pid
+
+Port 2222

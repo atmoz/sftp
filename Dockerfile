@@ -17,8 +17,6 @@ RUN rm -rf /var/lib/apt/lists/* && \
 COPY files/sshd_config /etc/ssh/
 COPY files/entrypoint /
 
-EXPOSE 22
-
 RUN mkdir -p /var/run/sshd \
     && chown -R stealth.stealth /etc/ssh/ /var/run/sshd
 
