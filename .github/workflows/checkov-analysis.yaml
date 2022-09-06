@@ -8,4 +8,4 @@ jobs:
         uses: actions/checkout@v3
       - name: Test with Checkov
         id: checkov
-        uses: bridgecrewio/checkov-action@master
+        uses: bridgecrewio/checkov-action@v12.1784.0
