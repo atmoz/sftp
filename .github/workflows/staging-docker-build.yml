@@ -85,7 +85,7 @@ jobs:
 
     steps:
       - name: Fetch Workflow Conclusion
-        uses: technote-space/workflow-conclusion-action@v2
+        uses: technote-space/workflow-conclusion-action@v3
 
       - name: Notify
         uses: 8398a7/action-slack@v3
