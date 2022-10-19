@@ -11,11 +11,6 @@ This is an automated build linked with the [debian](https://hub.docker.com/_/deb
 
 # DeMarque Usage
 
-## Docker image
-
-    docker build -t eu.gcr.io/market-250314/sftp:0.1.0 .
-    docker push eu.gcr.io/market-250314/sftp:0.1.0
-
 # Usage
 
 - Define users in (1) command arguments, (2) `SFTP_USERS` environment variable
