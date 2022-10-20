@@ -51,7 +51,7 @@ jobs:
     needs: setup-build-publish-deploy
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@master
+        uses: actions/checkout@v3
         with:
           repository: demarque/demarque-infra
           token: ${{ secrets.GH_CI_CD_TOKEN }}
