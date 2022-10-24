@@ -1,97 +1,20 @@
-name: Prod Docker Build
+name: Staging Docker Build
 
-on:
-  push:
-    branches:
-      - master
-
-env:
-  GCP_PROJECT: demarque
-  IMAGE: market-sftp
-  TARGET_ENV: prod
-  GCR_HOSTNAME: gcr.io
+on: workflow_dispatch
 
 jobs:
-  setup-build-publish-deploy:
-    name: Setup, Build, Publish
-    runs-on: ubuntu-20.04
-
-    outputs:
-      digest-output: ${{ steps.get-digest.outputs.digest }}
-
-    steps:
-    - name: Checkout
-      uses: actions/checkout@v3
-
-    - name: GCloud Authentification
-      uses: "google-github-actions/auth@v0"
-      with:
-        credentials_json: ${{ secrets.GCP_SA_KEY_DEMARQUE }}
-        project_id: ${{ secrets.GCP_PROJECT }}
-
-    - name: Setup Cloud SDK
-      uses: "google-github-actions/setup-gcloud@v0"
-
-    - name: Google Cloud Docker Auth
-      run: |-
-        gcloud auth configure-docker
-
-    - name: Build Prod Docker Image
-      run: |
-        docker build --build-arg STEALTH_USER_PASSWORD=${{ secrets.STEALTH_USER_PASSWORD }} -t $GCR_HOSTNAME/$GCP_PROJECT/$IMAGE:$GITHUB_SHA .
-
-    - name: Push Docker Image
-      run: |
-        docker push $GCR_HOSTNAME/$GCP_PROJECT/$IMAGE:$GITHUB_SHA
-
-    - name: Get Digest
-      id: get-digest
-      run: echo "::set-output name=digest::$(docker inspect --format='{{index .RepoDigests 0}}' $GCR_HOSTNAME/$GCP_PROJECT/$IMAGE:$GITHUB_SHA | cut -d'@' -f2)"
-
-  create-infra-pr:
-    name: Create infra PR
-    runs-on: ubuntu-20.04
-    needs: setup-build-publish-deploy
-    steps:
-    - name: Checkout infra
-      uses: actions/checkout@v3
-      with:
-        repository: demarque/demarque-infra
-        token: ${{ secrets.GH_CI_CD_TOKEN }}
-        path: infra
-
-    - name: Update Helm Chart Values
-      run: |
-        cd infra
-        sed -i 's/  tag: [a-zA-Z0-9]*/  tag: '${GITHUB_SHA}'/g' modules/market/base/charts/sftp/${TARGET_ENV}-*.yaml
-        sed -i 's/  digest: sha256:[a-zA-Z0-9]*/  digest: '${{needs.setup-build-publish-deploy.outputs.digest-output}}'/g' modules/market/base/charts/sftp/${TARGET_ENV}-*.yaml
-
-    - name: Open infra PR
-      uses: peter-evans/create-pull-request@v3.4.1
-      with:
-        token: ${{ secrets.GH_CI_CD_TOKEN }}
-        path: infra
-        committer: Github Actions <infra@demarque.com>
-        author: Github Actions <infra@demarque.com>
-        branch: deploy/${{ env.TARGET_ENV }}/${{ github.sha }}
-        commit-message: "chore: ${{ env.TARGET_ENV }} - deploy ${{ github.event.repository.name }} ${{ github.sha }}"
-        title: ${{ env.TARGET_ENV }} - deploy ${{ github.event.repository.name }} ${{ github.sha }}
-        body: ${{ env.TARGET_ENV }} - deploy ${{ github.event.repository.name }} ${{ github.sha }}
-        labels: automerge
-
-  notify:
-    name: Notify
-    runs-on: ubuntu-20.04
-    needs: create-infra-pr
-    if: ${{ always() }}
-
-    steps:
-    - uses: technote-space/workflow-conclusion-action@v3
-    - name: Notify
-      uses: 8398a7/action-slack@v3
-      with:
-        status: ${{ env.WORKFLOW_CONCLUSION }}
-        fields: repo,message,commit,author,action,eventName,ref,workflow
-      env:
-        GITHUB_TOKEN: ${{ secrets.GH_CI_CD_TOKEN }}
-        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+  staging-docker-build:
+    name: Staging Docker Build
+    uses: demarque/github-action-templates/.github/workflows/template-docker-build.yaml@main
+    with:
+      REF: master
+      GCR_HOSTNAME: gcr.io
+      GCP_PROJECT: demarque
+      IMAGE: market-sftp
+      GITHUB_SHA: ${{ github.sha }}
+      TARGET_ENV: prod
+      REPOSITORY_NAME: ${{ github.event.repository.name }}
+    secrets:
+      GCP_SA_KEY: ${{ secrets.GCP_SA_KEY_DEMARQUE }}
+      GH_CI_CD_TOKEN: ${{ secrets.GH_CI_CD_TOKEN }}
+      SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
