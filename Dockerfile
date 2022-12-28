@@ -13,6 +13,7 @@ RUN apt-get update && \
 
 COPY files/sshd_config /etc/ssh/sshd_config
 COPY files/create-sftp-user /usr/local/bin/
+COPY files/permit-scp.sh /usr/local/bin/
 COPY files/entrypoint /
 
 EXPOSE 22
