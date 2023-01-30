@@ -1,5 +1,5 @@
 FROM debian:bullseye
-MAINTAINER Adrian Dvergsdal [atmoz.net]
+LABEL org.opencontainers.image.authors="Adrian Dvergsdal [atmoz.net], poom [duck.com]"
 
 # Steps done in one RUN layer:
 # - Install packages
