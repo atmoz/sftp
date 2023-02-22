@@ -29,7 +29,7 @@ function validateArg() {
     fi
 }
 
-log "Parsing user data: \"$1\""
+log "Parsing user data:"
 IFS=':' read -ra args <<< "$1"
 
 skipIndex=0
