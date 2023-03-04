@@ -35,6 +35,7 @@ jobs:
             --file=Dockerfile \
             --tag="$IMAGE_NAME:latest" \
             --tag="$IMAGE_NAME:debian" \
+            --tag="$IMAGE_NAME:debian-$(date --rfc-3339=date)" \
             --label="org.opencontainers.image.source=$GITHUB_SERVER_URL/$GITHUB_REPOSITORY" \
             --label="org.opencontainers.image.revision=$GITHUB_SHA" \
             --label="org.opencontainers.image.created=$(date --rfc-3339=seconds)"
@@ -48,6 +49,7 @@ jobs:
             --pull=true \
             --file=Dockerfile-alpine \
             --tag="$IMAGE_NAME:alpine" \
+            --tag="$IMAGE_NAME:alpine-$(date --rfc-3339=date)" \
             --label="org.opencontainers.image.source=$GITHUB_SERVER_URL/$GITHUB_REPOSITORY" \
             --label="org.opencontainers.image.revision=$GITHUB_SHA" \
             --label="org.opencontainers.image.created=$(date --rfc-3339=seconds)"
@@ -79,7 +81,11 @@ jobs:
           TAG_DEBIAN=docker.pkg.github.com/$GITHUB_REPOSITORY/debian
           TAG_ALPINE=docker.pkg.github.com/$GITHUB_REPOSITORY/alpine
           docker tag $IMAGE_NAME:debian $TAG_DEBIAN
+          docker tag $TAG_DEBIAN $TAG_DEBIAN:latest
+          docker tag $TAG_DEBIAN $TAG_DEBIAN:$(date --rfc-3339=date)
           docker tag $IMAGE_NAME:alpine $TAG_ALPINE
+          docker tag $TAG_ALPINE $TAG_ALPINE:latest
+          docker tag $TAG_ALPINE $TAG_ALPINE:$(date --rfc-3339=date)
           docker push $TAG_DEBIAN
           docker push $TAG_ALPINE
           docker logout docker.pkg.github.com
