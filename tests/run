@@ -197,6 +197,37 @@ function testUsersConf() {
     assertTrue "dirs exists" $?
 }
 
+function testAddUsersConf() {
+    echo "user-from-conf:" > "$testDir/files/changing-users.conf"
+
+    docker run --name "$containerName" -d \
+        -v "$testDir/files/changing-users.conf:/etc/sftp/users.conf:ro" \
+        "$imageName" \
+        > "$redirect" 2>&1
+
+    waitForServer "$containerName"
+    assertTrue "waitForServer" $?
+
+    docker exec "$containerName" id user-from-conf > /dev/null
+    assertTrue "user-from-conf" $?
+
+    echo "add-user-from-conf:" >> "$testDir/files/changing-users.conf"
+    echo "add-user2-from-conf:" >> "$testDir/files/changing-users.conf"
+
+    docker restart "$containerName" > "$redirect" 2>&1
+
+    waitForServer "$containerName"
+    assertTrue "waitForServer" $?
+
+    docker exec "$containerName" id add-user-from-conf > /dev/null
+    assertTrue "add-user-from-conf" $?
+
+    docker exec "$containerName" id add-user2-from-conf > /dev/null
+    assertTrue "add-user2-from-conf" $?
+
+    rm -f "$testDir/files/changing-users.conf"
+}
+
 function testLegacyUsersConf() {
     docker run --name "$containerName" "$sshHostKeyMountArg" -d \
         -v "$testDir/files/users.conf:/etc/sftp-users.conf:ro" \
