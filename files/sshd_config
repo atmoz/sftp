@@ -18,5 +18,8 @@ Subsystem sftp internal-sftp
 ForceCommand internal-sftp
 ChrootDirectory %h
 
+# Permit SCP
+ForceCommand /usr/local/bin/permit-scp.sh
+
 # Enable this for more logs
 #LogLevel VERBOSE
