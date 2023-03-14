@@ -99,7 +99,7 @@ docker run \
 Tip: you can use this Python code to generate encrypted passwords:  
 `docker run --rm python:alpine python -c "import crypt; print(crypt.crypt('YOUR_PASSWORD'))"`
 
-## Logging in with SSH keys
+## Logging in with SSH keys in ~/.ssh/authorized_keys
 
 Mount public keys in the user's `.ssh/keys/` directory. All keys are automatically appended to `.ssh/authorized_keys` (you can't mount this file directly, because OpenSSH requires limited file permissions). In this example, we do not provide any password, so the user `foo` can only login with his SSH key.
 
@@ -107,6 +107,31 @@ Mount public keys in the user's `.ssh/keys/` directory. All keys are automatical
 docker run \
     -v <host-dir>/id_rsa.pub:/home/foo/.ssh/keys/id_rsa.pub:ro \
     -v <host-dir>/id_other.pub:/home/foo/.ssh/keys/id_other.pub:ro \
+    -v <host-dir>/share:/home/foo/share \
+    -p 2222:22 -d atmoz/sftp \
+    foo::1001
+```
+
+## Logging in with SSH keys in /etc/ssh/authorized_keys/%u/authorized_keys
+
+For each user create the `authorized_keys` file and put it into a directory structure like this:
+
+```text
+all_keys
+ |------- user1
+ |         `----- authorized_keys
+ |------- user2
+ |         `----- authorized_keys
+ :
+ `------- userN
+           `----- authorized_keys
+```
+
+Mount this directory ass `/etc/ssh/authorized_keys`
+
+```
+docker run \
+    -v <host-dir>/all_keys:/etc/ssh/authorized_keys:ro \
     -v <host-dir>/share:/home/foo/share \
     -p 2222:22 -d atmoz/sftp \
     foo::1001
