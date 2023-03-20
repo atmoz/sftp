@@ -9,7 +9,8 @@ RUN apt-get update && \
     apt-get -y install openssh-server && \
     rm -rf /var/lib/apt/lists/* && \
     mkdir -p /var/run/sshd && \
-    rm -f /etc/ssh/ssh_host_*key*
+    rm -f /etc/ssh/ssh_host_*key* && \
+    mkdir -p /etc/sshd_authorized_keys
 
 COPY files/sshd_config /etc/ssh/sshd_config
 COPY files/create-sftp-user /usr/local/bin/
