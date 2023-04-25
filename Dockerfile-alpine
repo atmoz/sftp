@@ -23,6 +23,9 @@ RUN dos2unix /entrypoint
 RUN chmod +x /entrypoint
 RUN chmod +x /usr/local/bin/create-sftp-user
 
+RUN apk del dos2unix --force-broken-world --progress && \
+    rm -rf /var/cache/apk/*
+
 EXPOSE 22
 
 ENTRYPOINT ["/entrypoint"]
