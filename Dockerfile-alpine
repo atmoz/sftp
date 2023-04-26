@@ -16,15 +16,14 @@ COPY files/sshd_config /etc/ssh/sshd_config
 COPY files/create-sftp-user /usr/local/bin/
 COPY files/entrypoint /
 
-RUN dos2unix /etc/ssh/sshd_config
-RUN dos2unix /usr/local/bin/create-sftp-user
-RUN dos2unix /entrypoint
+RUN dos2unix /etc/ssh/sshd_config && \
+    dos2unix /usr/local/bin/create-sftp-user && \
+    dos2unix /entrypoint
 
-RUN chmod +x /entrypoint
-RUN chmod +x /usr/local/bin/create-sftp-user
+RUN chmod +x /entrypoint && \
+    chmod +x /usr/local/bin/create-sftp-user
 
-RUN apk del dos2unix --force-broken-world --progress && \
-    rm -rf /var/cache/apk/*
+RUN apk del dos2unix --force-broken-world --progress
 
 EXPOSE 22
 
