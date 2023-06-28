@@ -54,6 +54,19 @@ jobs:
 
       - name: Test alpine image
         run: tests/run $IMAGE_NAME:alpine
+      
+      - name: Build rocky image
+        run: |
+          docker build . \
+            --pull=true \
+            --file=Dockerfile-rocky \
+            --tag="$IMAGE_NAME:rocky" \
+            --label="org.opencontainers.image.source=$GITHUB_SERVER_URL/$GITHUB_REPOSITORY" \
+            --label="org.opencontainers.image.revision=$GITHUB_SHA" \
+            --label="org.opencontainers.image.created=$(date --rfc-3339=seconds)"
+
+      - name: Test rocky image
+        run: tests/run $IMAGE_NAME:rocky
 
       - name: Verify signature
         if: github.ref == 'refs/heads/master'
@@ -78,9 +91,12 @@ jobs:
 
           TAG_DEBIAN=docker.pkg.github.com/$GITHUB_REPOSITORY/debian
           TAG_ALPINE=docker.pkg.github.com/$GITHUB_REPOSITORY/alpine
+          TAG_ROCKY=docker.pkg.github.com/$GITHUB_REPOSITORY/rocky
           docker tag $IMAGE_NAME:debian $TAG_DEBIAN
           docker tag $IMAGE_NAME:alpine $TAG_ALPINE
+          docker tag $IMAGE_NAME:rocky $TAG_ROCKY
           docker push $TAG_DEBIAN
           docker push $TAG_ALPINE
+          docker push $TAG_ROCKY
           docker logout docker.pkg.github.com
 
