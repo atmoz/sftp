@@ -72,7 +72,7 @@ if [ ! -f "$userConfFinalPath" ]; then
         ssh-keygen -t rsa -b 4096 -f /etc/ssh/ssh_host_rsa_key -N ''
     fi
     if [ ! -f /etc/ssh/ssh_host_ecdsa_key ]; then
-        ssh-keygen -t rsa -b 4096 -f /etc/ssh/ssh_host_ecdsa_key -N ''
+        ssh-keygen -t ecdsa -b 521 -f /etc/ssh/ssh_host_ecdsa_key -N ''
     fi
 
     # Restrict access from other users
