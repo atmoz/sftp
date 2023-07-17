@@ -20,3 +20,5 @@ ChrootDirectory %h
 
 # Enable this for more logs
 #LogLevel VERBOSE
+
+Port SSHD_PORT
