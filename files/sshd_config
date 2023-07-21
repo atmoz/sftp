@@ -1,3 +1,6 @@
+# Apply config from sub-files. Values in sub-files generally overrides values here.
+Include /etc/ssh/sshd_config.d/*.conf
+
 # Secure defaults
 # See: https://stribika.github.io/2015/01/04/secure-secure-shell.html
 Protocol 2
