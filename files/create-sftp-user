@@ -44,6 +44,14 @@ if [ "${args[2]}" == "e" ]; then
     skipIndex=1
 fi
 
+if [[ "${args[$((skipIndex+2))]}" = '/'* ]] ; then
+	home="${args[$((skipIndex+2))]}"
+	useraddOptions+=(-d "$home")
+	skipIndex=$((skipIndex+1))
+fi
+
+echo ---$user - $skipIndex
+
 uid="${args[$((skipIndex+2))]}"; validateArg "UID" "$uid" "$reUid" || exit 1
 gid="${args[$((skipIndex+3))]}"; validateArg "GID" "$gid" "$reGid" || exit 1
 dir="${args[$((skipIndex+4))]}"; validateArg "dirs" "$dir" "$reDir" || exit 1
