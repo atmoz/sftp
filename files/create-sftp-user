@@ -44,6 +44,7 @@ if [ "${args[2]}" == "e" ]; then
     skipIndex=1
 fi
 
+# If the next arg is a path, assume it is a home directory
 if [[ "${args[$((skipIndex+2))]}" = '/'* ]] ; then
 	home="${args[$((skipIndex+2))]}"
 	useraddOptions+=(-d "$home")
