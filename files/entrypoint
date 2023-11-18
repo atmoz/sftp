@@ -55,6 +55,11 @@ if [ ! -f "$userConfFinalPath" ]; then
 
     # Check that we have users in config
     if [ -f "$userConfFinalPath" ] && [ "$(wc -l < "$userConfFinalPath")" -gt 0 ]; then
+        if [ -n "$(find /home -perm /go=w -o \! -user root -maxdepth 0)" ]; then
+            log "Modify /home to have the correct permissions, as it may be mounted with the wrong permissions."
+            chmod go-w /home
+            chown root /home
+        fi
         # Import users from final conf file
         while IFS= read -r user || [[ -n "$user" ]]; do
             create-sftp-user "$user"
