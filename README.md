@@ -41,6 +41,24 @@ docker run -p 22:22 -d atmoz/sftp foo:pass:::upload
 
 User "foo" with password "pass" can login with sftp and upload files to a folder called "upload". No mounted directories or custom UID/GID. Later you can inspect the files and use `--volumes-from` to mount them somewhere else (or see next example).
 
+## Simplest kubernetes deployment example
+```
+kubectl apply -f https://raw.githubusercontent.com/aushafy/sftp/master/examples/kubernetes/simplest-deployment.yaml
+```
+
+Warning! do not apply this manifest to the production environment, this is only for testing! data written on to SFTP server would be erased during restart or rollout
+
+### Testing SFTP Server on Kubernetes
+```
+kubectl port-forward svc/sftp-server 2222:22
+```
+
+then open another terminal and run
+
+```
+sftp -P 2222 foo@localhost 
+```
+
 ## Sharing a directory from your computer
 
 Let's mount a directory and set UID:

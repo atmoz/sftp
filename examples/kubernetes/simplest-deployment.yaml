@@ -1,0 +1,36 @@
+# Warning!
+# do not apply this manifest to the production environment, this is only for testing
+# data written on to SFTP server would be erased during restart or rollout
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sftp-server
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: sftp-server
+  template:
+    metadata:
+      labels:
+        app: sftp-server
+    spec:
+      containers:
+      - name: sftp-server
+        image: atmoz/sftp:alpine
+        ports:
+        - containerPort: 22
+        args: ["foo:pass:::upload"]
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: sftp-server
+spec:
+  selector:
+    app: sftp-server
+  ports:
+    - protocol: TCP
+      port: 22
+      targetPort: 22
+  type: ClusterIP
