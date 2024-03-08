@@ -6,7 +6,7 @@ argOutput=${2:-"quiet"}
 argCleanup=${3:-"cleanup"}
 testDir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 imageName="$argImage"
-tmpDir="$(mktemp -d /tmp/atmoz_sftp_XXXX)"
+tmpDir="$(mktemp -d /tmp/twojack_sftp_XXXX)"
 sshKeyPri="$tmpDir/rsa"
 sshKeyPub="$tmpDir/rsa.pub"
 sshHostEd25519Key="$tmpDir/ssh_host_ed25519_key"
@@ -57,7 +57,7 @@ function oneTimeSetUp() {
 
 function setUp() {
     # shellcheck disable=SC2154
-    containerName="atmoz_sftp_${_shunit_test_}"
+    containerName="twojack_sftp_${_shunit_test_}"
     containerTmpDir="$(mktemp -d "/tmp/${containerName}_XXXX")"
     export containerName containerTmpDir
 
