@@ -34,7 +34,7 @@ IFS=':' read -ra args <<< "$1"
 
 skipIndex=0
 chpasswdOptions=""
-useraddOptions=(--no-user-group --badnames)
+useraddOptions=(--no-user-group --badname)
 
 user="${args[0]}"; validateArg "username" "$user" "$reUser" || exit 1
 pass="${args[1]}"; validateArg "password" "$pass" "$rePass" || exit 1
