@@ -6,7 +6,7 @@ MAINTAINER Adrian Dvergsdal [atmoz.net]
 # - OpenSSH needs /var/run/sshd to run
 # - Remove generic host keys, entrypoint generates unique keys
 RUN apt-get update && \
-    apt-get -y install openssh-server && \
+    DEBIAN_FRONTEND="noninteractive" apt-get -y install --no-install-recommends openssh-server && \
     rm -rf /var/lib/apt/lists/* && \
     mkdir -p /var/run/sshd && \
     rm -f /etc/ssh/ssh_host_*key*
