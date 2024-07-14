@@ -2,10 +2,12 @@ FROM alpine:latest
 MAINTAINER Adrian Dvergsdal [atmoz.net]
 
 # Steps done in one RUN layer:
-# - Install packages
+# - Install upgrades and new packages
 # - OpenSSH needs /var/run/sshd to run
 # - Remove generic host keys, entrypoint generates unique keys
-RUN apk add --no-cache bash shadow openssh-server-pam openssh-sftp-server && \
+RUN apk update && apk upgrade && \
+    apk add bash shadow openssh-server-pam openssh-sftp-server && \
+    rm -rf /var/cache/apk/* && \
     ln -s /usr/sbin/sshd.pam /usr/sbin/sshd && \
     mkdir -p /var/run/sshd && \
     rm -f /etc/ssh/ssh_host_*key*
