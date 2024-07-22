@@ -90,6 +90,9 @@ if [ -d /etc/sftp.d ]; then
     unset f
 fi
 
+
+sed -i "s/SSHD_PORT/$SSHD_PORT/" /etc/ssh/sshd_config
+
 if $startSshd; then
     log "Executing sshd"
     exec /usr/sbin/sshd -D -e
