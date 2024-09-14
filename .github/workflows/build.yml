@@ -37,7 +37,7 @@ jobs:
       containerfile: Dockerfile-alpine
       image: "$GITHUB_REPOSITORY"
       tag: alpine
-      update-check: "apk update &>/dev/null && apk version -q -l '>'"
+      update-check: "apk update >/dev/null && apk list --upgradable"
     secrets: inherit
 
   debian:
@@ -47,5 +47,5 @@ jobs:
       containerfile: Dockerfile
       image: "$GITHUB_REPOSITORY"
       tag: debian
-      update-check: "apt-get update &>/dev/null && apt-get upgrade -s | grep '^Inst' || true"
+      update-check: "apt-get update >/dev/null && apt-get upgrade -s | grep '^Inst' || true"
     secrets: inherit
