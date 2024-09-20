@@ -30,6 +30,8 @@ Easy to use SFTP ([SSH File Transfer Protocol](https://en.wikipedia.org/wiki/SSH
     own home directory, so make sure there are at least one subdirectory if you
     want them to upload files.
   - For consistent server fingerprint, mount your own host keys (i.e. `/etc/ssh/ssh_host_*`)
+- Override port
+  - The container will internally listen on the port 22 (default port for sshd), but if for any reasons you want another port to be used internally instead of the default, you can change it with the env var SSHD_PORT
 
 # Examples
 
@@ -62,6 +64,12 @@ sftp:
     ports:
         - "2222:22"
     command: foo:pass:1001
+```
+
+### Overriding the default port, so that sshd doesn't listen port 22
+
+```
+docker run -e SSHD_PORT=1234 -p 1234:1234 -d atmoz/sftp foo:pass:::upload
 ```
 
 ### Logging in

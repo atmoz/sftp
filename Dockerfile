@@ -1,6 +1,8 @@
 FROM debian:bookworm
 MAINTAINER Adrian Dvergsdal [atmoz.net]
 
+ENV SSHD_PORT 22
+
 # Steps done in one RUN layer:
 # - Install upgrades and new packages
 # - OpenSSH needs /var/run/sshd to run
@@ -15,7 +17,5 @@ RUN apt-get update && \
 COPY files/sshd_config /etc/ssh/sshd_config
 COPY files/create-sftp-user /usr/local/bin/
 COPY files/entrypoint /
-
-EXPOSE 22
 
 ENTRYPOINT ["/entrypoint"]
