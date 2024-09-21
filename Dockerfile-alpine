@@ -10,11 +10,21 @@ RUN apk update && apk upgrade && \
     rm -rf /var/cache/apk/* && \
     ln -s /usr/sbin/sshd.pam /usr/sbin/sshd && \
     mkdir -p /var/run/sshd && \
-    rm -f /etc/ssh/ssh_host_*key*
+    rm -f /etc/ssh/ssh_host_*key* && \
+    apk --no-cache add dos2unix
 
 COPY files/sshd_config /etc/ssh/sshd_config
 COPY files/create-sftp-user /usr/local/bin/
 COPY files/entrypoint /
+
+RUN dos2unix /etc/ssh/sshd_config && \
+    dos2unix /usr/local/bin/create-sftp-user && \
+    dos2unix /entrypoint
+
+RUN chmod +x /entrypoint && \
+    chmod +x /usr/local/bin/create-sftp-user
+
+RUN apk del dos2unix --force-broken-world --progress
 
 EXPOSE 22
 
