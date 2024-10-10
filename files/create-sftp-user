@@ -29,7 +29,8 @@ function validateArg() {
     fi
 }
 
-log "Parsing user data: \"$1\""
+# Replace password in log output with asterisks
+log "Parsing user data: \"$(echo "$1" | cut -d: -f1,3- | sed -e '1,/:/{s/:/:******:/}')\""
 IFS=':' read -ra args <<< "$1"
 
 skipIndex=0
