@@ -120,6 +120,8 @@ This container will generate new SSH host keys at first run. To avoid that your 
 docker run \
     -v <host-dir>/ssh_host_ed25519_key:/etc/ssh/ssh_host_ed25519_key \
     -v <host-dir>/ssh_host_rsa_key:/etc/ssh/ssh_host_rsa_key \
+    -v <host-dir>/ssh_host_ed25519_key.pub:/home/foo/.ssh/keys/ssh_host_ed25519_key.pub:ro \
+    -v <host-dir>/ssh_host_rsa_key.pub:/home/foo/.ssh/keys/ssh_host_rsa_key.pub:ro \
     -v <host-dir>/share:/home/foo/share \
     -p 2222:22 -d atmoz/sftp \
     foo::1001
@@ -131,7 +133,11 @@ Tip: you can generate your keys with these commands:
 ssh-keygen -t ed25519 -f ssh_host_ed25519_key < /dev/null
 ssh-keygen -t rsa -b 4096 -f ssh_host_rsa_key < /dev/null
 ```
-
+ 
+Test it with:
+  ```
+ sftp -P 2222 -i <host-dir>/ssh_host_ed25519_key -oStrictHostKeyChecking=no -oUserKnownHostsFile=/dev/null foo@localhost
+  ```
 ## Execute custom scripts or applications
 
 Put your programs in `/etc/sftp.d/` and it will automatically run when the container starts.
