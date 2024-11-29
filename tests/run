@@ -5,7 +5,7 @@
 # Example: tests/run atmoz/sftp:alpine
 
 # Configs
-CONFIG_NETWORK="bridge" # see `docker network ls` and select a valid network from the NAME column.
+CONFIG_NETWORK="private" # see `docker network ls` and select a valid network from the NAME column.
 
 # Booleans
 OPTION_TRUE=0
@@ -400,7 +400,7 @@ function testOneUserTwoSshKeys() {
     waitForServer "$containerName"
     assertTrue "waitForServer" $?
 
-    # Confirm both public keys work, i.e., ensuring authorized_keys has been properly prepared with both public keys.
+    # Confirm both public keys work
     runSftpCommands "$containerName" "user" "$sshKeyPri1" \
         "ls" \
         "exit"
