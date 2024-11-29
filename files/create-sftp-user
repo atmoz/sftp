@@ -86,9 +86,8 @@ if [ -d "$userKeysQueuedDir" ]; then
     userKeysAllowedFileTmp="$(mktemp)"
     userKeysAllowedFile="/home/$user/.ssh/authorized_keys"
 
-    for publickey in "$userKeysQueuedDir"/*; do
-        cat "$publickey" >> "$userKeysAllowedFileTmp"
-    done
+    # Use paste to enforce a newline, so that multiple keys don't break authorized_keys.
+    paste -d "\\n" -s "$userKeysQueuedDir"/* > "$userKeysAllowedFileTmp"
 
     # Remove duplicate keys
     sort < "$userKeysAllowedFileTmp" | uniq > "$userKeysAllowedFile"

@@ -4,6 +4,9 @@
 # Options: --verbose --no-cleanup
 # Example: tests/run atmoz/sftp:alpine
 
+# Configs
+CONFIG_NETWORK="private" # see `docker network ls` and select a valid network from the NAME column.
+
 # Booleans
 OPTION_TRUE=0
 OPTION_FALSE=1
@@ -25,12 +28,14 @@ done
 
 testDir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 tmpDir="$(mktemp -d /tmp/atmoz_sftp_XXXX)"
-sshKeyPri="$tmpDir/rsa"
-sshKeyPub="$tmpDir/rsa.pub"
+sshKeyPri1="$tmpDir/rsa1"
+sshKeyPub1="$tmpDir/rsa1.pub"
+sshKeyPri2="$tmpDir/rsa2"
+sshKeyPub2="$tmpDir/rsa2.pub"
 sshHostEd25519Key="$tmpDir/ssh_host_ed25519_key"
 sshHostKeyMountArg="--volume=$sshHostEd25519Key:/etc/ssh/ssh_host_ed25519_key"
 sshKnownHosts="$tmpDir/known_hosts"
-runArgs=("-P" "--network=private" "$sshHostKeyMountArg")
+runArgs=("-P" "--network=${CONFIG_NETWORK}" "$sshHostKeyMountArg")
 
 # podman or docker
 if [ -z "$CONTAINER_ENGINE" ]; then
@@ -64,12 +69,16 @@ fi
 
 function oneTimeSetUp() {
     # Generate temporary ssh keys for testing
-    if [ ! -f "$sshKeyPri" ]; then
-        ssh-keygen -t rsa -f "$sshKeyPri" -N '' < /dev/null > "$redirect" 2>&1
+    if [ ! -f "$sshKeyPri1" ]; then
+        ssh-keygen -t rsa -f "$sshKeyPri1" -N '' < /dev/null > "$redirect" 2>&1
+    fi
+    if [ ! -f "$sshKeyPri2" ]; then
+        ssh-keygen -t rsa -f "$sshKeyPri2" -N '' < /dev/null > "$redirect" 2>&1
     fi
 
     # Private key can not be read by others (sshd will complain)
-    chmod go-rw "$sshKeyPri"
+    chmod go-rw "$sshKeyPri1"
+    chmod go-rw "$sshKeyPri2"
 
     # Generate host key
     ssh-keygen -t ed25519 -f "$sshHostEd25519Key" -N '' < /dev/null
@@ -117,9 +126,10 @@ function getSftpPort() {
 }
 
 function runSftpCommands() {
-    port="$(getSftpPort "$1")"
-    user="$2"
-    shift 2
+    local port="$(getSftpPort "$1")"
+    local user="$2"
+    local sshKeyPri="$3"
+    shift 3
 
     echo "127.0.0.1 $(cat "$sshHostEd25519Key.pub")" >> "$sshKnownHosts"
 
@@ -278,14 +288,14 @@ function testCreateUsersUsingCombo() {
 
 function testWriteAccessToAutocreatedDirs() {
     container run --name "$containerName" "${runArgs[@]}" -d \
-        -v "$sshKeyPub":/home/test/.ssh/keys/id_rsa.pub:ro \
+        -v "$sshKeyPub1":/home/test/.ssh/keys/id_rsa.pub:ro \
         "$imageName" "test::::testdir,dir with spaces" \
         > "$redirect" 2>&1
 
     waitForServer "$containerName"
     assertTrue "waitForServer" $?
 
-    runSftpCommands "$containerName" "test" \
+    runSftpCommands "$containerName" "test" "$sshKeyPri1" \
         "cd testdir" \
         "mkdir test" \
         "cd '../dir with spaces'" \
@@ -317,7 +327,7 @@ EOF
     chmod +x "$tmpScript"
 
     container run --name "$containerName" "${runArgs[@]}" -d \
-        -v "$sshKeyPub":/home/test/.ssh/keys/id_rsa.pub:ro \
+        -v "$sshKeyPub1":/home/test/.ssh/keys/id_rsa.pub:ro \
         -v "$tmpConfig:/etc/ssh/sshd_config" \
         -v "$tmpScript:/etc/sftp.d/limited_home_dir" \
         "$imageName" "test::::sftp/upload" \
@@ -326,7 +336,7 @@ EOF
     waitForServer "$containerName"
     assertTrue "waitForServer" $?
 
-    runSftpCommands "$containerName" "test" \
+    runSftpCommands "$containerName" "test" "$sshKeyPri1" \
         "cd upload" \
         "mkdir test" \
         "exit"
@@ -346,7 +356,7 @@ function testBindmountDirScript() {
 
     container run --name "$containerName" "${runArgs[@]}" -d \
         --privileged=true \
-        -v "$sshKeyPub":/home/custom/.ssh/keys/id_rsa.pub:ro \
+        -v "$sshKeyPub1":/home/custom/.ssh/keys/id_rsa.pub:ro \
         -v "$containerTmpDir/custom/bindmount":/custom \
         -v "$containerTmpDir/mount.sh":/etc/sftp.d/mount.sh \
         "$imageName" custom:123 \
@@ -355,7 +365,7 @@ function testBindmountDirScript() {
     waitForServer "$containerName"
     assertTrue "waitForServer" $?
 
-    runSftpCommands "$containerName" "custom" \
+    runSftpCommands "$containerName" "custom" "$sshKeyPri1" \
         "cd bindmount" \
         "mkdir test" \
         "exit"
@@ -367,8 +377,8 @@ function testBindmountDirScript() {
 
 function testDuplicateSshKeys() {
     container run --name "$containerName" "${runArgs[@]}" -d \
-        -v "$sshKeyPub":/home/user/.ssh/keys/key1.pub:ro \
-        -v "$sshKeyPub":/home/user/.ssh/keys/key2.pub:ro \
+        -v "$sshKeyPub1":/home/user/.ssh/keys/key1.pub:ro \
+        -v "$sshKeyPub1":/home/user/.ssh/keys/key2.pub:ro \
         "$imageName" "user:" \
         > "$redirect" 2>&1
 
@@ -378,6 +388,34 @@ function testDuplicateSshKeys() {
     lines="$(container exec "$containerName" sh -c \
         "wc -l < /home/user/.ssh/authorized_keys")"
     assertEquals "1" "$lines"
+}
+
+# This test confirms that multiple keys can be properly merged into authorized_keys, even when a key file is missing a trailing newline.
+function testOneUserTwoSshKeys() {
+    sshKeyPub1NoNewline="$sshKeyPub1.tmp"
+    
+    # Create public key file without a trailing newline.
+    cat "$sshKeyPub1" | tr -d '\n' > $sshKeyPub1NoNewline
+
+    container run --name "$containerName" "${runArgs[@]}" -d \
+        -v "$sshKeyPub1NoNewline":/home/user/.ssh/keys/key1.pub:ro \
+        -v "$sshKeyPub2":/home/user/.ssh/keys/key2.pub:ro \
+        "$imageName" ""user:"" \
+        > "$redirect" 2>&1
+
+    waitForServer "$containerName"
+    assertTrue "waitForServer" $?
+
+    # Confirm both public keys work
+    runSftpCommands "$containerName" "user" "$sshKeyPri1" \
+        "ls" \
+        "exit"
+    assertTrue "runSftpCommands" $?
+
+    runSftpCommands "$containerName" "user" "$sshKeyPri2" \
+        "ls" \
+        "exit"
+    assertTrue "runSftpCommands" $?
 }
 
 ##############################################################################
