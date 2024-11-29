@@ -86,9 +86,9 @@ if [ -d "$userKeysQueuedDir" ]; then
     userKeysAllowedFileTmp="$(mktemp)"
     userKeysAllowedFile="/home/$user/.ssh/authorized_keys"
 
-    for publickey in "$userKeysQueuedDir"/*; do
-        cat "$publickey" >> "$userKeysAllowedFileTmp"
-    done
+    # use paste to aggregate public keys, enforcing that each is separated by a newline, which will be required in authorized_keys.
+    # While ssh-keygen creates public keys that end in a newline, sometimes this newline is lost, e.g., when the key is mounted by a configmap in k8s.
+    paste --delimiter=\\n --serial "$userKeysQueuedDir"/* > "$userKeysAllowedFileTmp"
 
     # Remove duplicate keys
     sort < "$userKeysAllowedFileTmp" | uniq > "$userKeysAllowedFile"
