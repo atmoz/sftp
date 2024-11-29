@@ -5,7 +5,7 @@
 # Example: tests/run atmoz/sftp:alpine
 
 # Configs
-CONFIG_NETWORK="private" # see `docker network ls` and select a valid network from the NAME column.
+CONFIG_NETWORK="bridge" # see `docker network ls` and select a valid network from the NAME column.
 
 # Booleans
 OPTION_TRUE=0
@@ -141,7 +141,6 @@ function runSftpCommands() {
     echo "$commands" | sftp \
         -i "$sshKeyPri" \
         -oUserKnownHostsFile="$sshKnownHosts" \
-        -oHostKeyAlgorithms=+ecdsa-sha2-nistp521 \
         -b - -P "$port" "$user@127.0.0.1" \
         > "$redirect" 2>&1
 
