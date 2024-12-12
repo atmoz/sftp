@@ -46,4 +46,4 @@ jobs:
           file: Dockerfile
           push: true
           platforms: linux/amd64,linux/arm64
-          tags: ${{ env.image_tag }}
+          tags: ghcr.io/cardlay/${{ env.image_tag }}
