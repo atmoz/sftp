@@ -1,11 +1,6 @@
 name: Push image
 on:
   workflow_call:
-    inputs:
-      update-check:
-        description: command to run on old image and check for updates
-        required: true
-        type: string
 
 env:
   image_tag: sftp:debian

@@ -17,6 +17,4 @@ jobs:
   debian:
     needs: verify
     uses: ./.github/workflows/build-image.yml
-    with:
-      update-check: "apt-get update >/dev/null && apt-get upgrade -s | grep '^Inst' || true"
     secrets: inherit

@@ -1,5 +1,4 @@
 FROM debian:bookworm
-MAINTAINER Adrian Dvergsdal [atmoz.net]
 
 # Steps done in one RUN layer:
 # - Install upgrades and new packages
