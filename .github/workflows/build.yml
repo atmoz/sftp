@@ -1,51 +1,22 @@
 name: build
 
 on:
-  schedule:
-    - cron: "0 12 * * *"
-  push:
-    paths-ignore:
-      - "*.md"
-      - "*.txt"
-      - "*.png"
   pull_request:
-  workflow_dispatch:
+    branches:
+      - master
 
 jobs:
   verify:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0 # for proper signature verification
-
-      - name: Verify signature
-        if: github.repository == 'atmoz/sftp'
-        uses: atmoz/git-verify-ref@master
-        with:
-          import-github-users: atmoz
-
       - name: Run ShellCheck
         uses: ludeeus/action-shellcheck@master
         with:
           ignore_paths: tests/shunit2
 
-  alpine:
-    needs: verify
-    uses: ./.github/workflows/build-image.yml
-    with:
-      containerfile: Dockerfile-alpine
-      image: "$GITHUB_REPOSITORY"
-      tag: alpine
-      update-check: "apk update >/dev/null && apk list --upgradable"
-    secrets: inherit
-
   debian:
     needs: verify
     uses: ./.github/workflows/build-image.yml
     with:
-      containerfile: Dockerfile
-      image: "$GITHUB_REPOSITORY"
-      tag: debian
       update-check: "apt-get update >/dev/null && apt-get upgrade -s | grep '^Inst' || true"
     secrets: inherit
