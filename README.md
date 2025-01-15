@@ -97,7 +97,11 @@ docker run \
 ```
 
 Tip: you can use this Python code to generate encrypted passwords:  
-`docker run --rm python:alpine python -c "import crypt; print(crypt.crypt('YOUR_PASSWORD'))"`
+`docker run --rm python:3.10 python -c "import crypt; print(crypt.crypt('YOUR_PASSWORD'))"`
+ 
+or use [makepassd](https://manpages.debian.org/bookworm/makepasswd/makepasswd.1.en.html)
+ 
+`docker run --rm --entrypoint=/usr/bin/mkpasswd atmoz/sftp:alpine "YOUR_PASSWORD"`
 
 ## Logging in with SSH keys
 
