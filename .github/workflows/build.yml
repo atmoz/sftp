@@ -4,11 +4,13 @@ on:
   schedule:
     - cron: "0 0 1 * *" # every month
   push:
+    branches:
+      - master
+      - feature/persistent-host-key-support
     paths-ignore:
       - "*.md"
       - "*.txt"
       - "*.png"
-  pull_request:
 
 env:
   IMAGE_NAME: ghcr.io/techonomydev/atmoz-sftp

@@ -13,6 +13,9 @@ RUN apt-get update && \
 COPY files/sshd_config /etc/ssh/sshd_config
 COPY files/create-sftp-user /usr/local/bin/
 COPY files/entrypoint /
+COPY files/startup_scripts/load_env_host_key.bash /etc/sftp.d/load_env_host_key.bash
+
+RUN chmod +x /etc/sftp.d/*
 
 EXPOSE 22
 
