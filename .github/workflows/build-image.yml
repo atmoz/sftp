@@ -116,28 +116,37 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Download image
-        uses: actions/download-artifact@v4
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
         with:
-          name: ${{ inputs.tag }}
+          registry: docker.pkg.github.com
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Load image
-        run: docker load -i "${{ inputs.tag }}.tar"
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_HUB_USERNAME }}
+          password: ${{ secrets.DOCKER_HUB_PASSWORD }}
 
-      - name: Push image to GitHub registry
-        run: |
-          echo "${{ secrets.GITHUB_TOKEN }}" | docker login docker.pkg.github.com \
-            -u ${{ github.actor }} --password-stdin
-
-          github_tag=docker.pkg.github.com/${{ inputs.image }}/${{ inputs.tag }}
-          docker tag "${{ inputs.image }}:${{ inputs.tag }}" $github_tag
-          docker push "$github_tag"
-          docker logout docker.pkg.github.com
-
-      - name: Push images to Docker Hub registry
-        run: |
-          echo "${{ secrets.DOCKER_HUB_PASSWORD }}" | docker login \
-            -u ${{ secrets.DOCKER_HUB_USERNAME }} --password-stdin
-
-          docker push "${{ inputs.image }}:${{ inputs.tag }}"
-          docker logout
+      - name: Build and push multi-arch images
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ${{ inputs.containerfile }}
+          platforms: linux/amd64,linux/arm64,linux/arm/v7
+          pull: true
+          push: true
+          tags: |
+            docker.pkg.github.com/${{ inputs.image }}/${{ inputs.tag }}
+            ${{ inputs.image }}:${{ inputs.tag }}
+          labels: |
+            org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
+            org.opencontainers.image.revision=${{ github.sha }}
+            org.opencontainers.image.created=${{ github.event.repository.updated_at }}
