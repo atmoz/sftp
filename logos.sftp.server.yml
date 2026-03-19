@@ -1,0 +1,19 @@
+
+services:
+   logos.sftp.srv:
+      image: ${SFTP_IMAGE}
+      restart: unless-stopped
+      hostname: ${SFTP_HOSTNAME}
+      environment:
+         SFTP_USERS: ${ENV_SFTP_USERS}
+      volumes:
+         - ${SFTP_HOST_UPLOAD_FOLDER}:${SFTP_UPLOAD_FOLDER}
+      ports:
+         - "${SFTP_HOST_PORT}:22"
+      healthcheck:
+         test: ${HEALTCHECK_CMD} 
+         interval: ${HEALTHCHECK_INTERVAL_SEC}
+         timeout: ${HEALTHCHECK_TIMEOUT_SEC}
+         retries: ${HEALTHCHECK_RETRIES}
+         start_period: ${HEALTCHECK_START_PERIOD_SEC}
+

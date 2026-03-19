@@ -1,4 +1,4 @@
-FROM debian:bookworm
+FROM debian:bookworm-slim
 MAINTAINER Adrian Dvergsdal [atmoz.net]
 
 # Steps done in one RUN layer:
@@ -8,12 +8,14 @@ MAINTAINER Adrian Dvergsdal [atmoz.net]
 RUN apt-get update && \
     apt-get upgrade -y && \
     DEBIAN_FRONTEND="noninteractive" apt-get -y install --no-install-recommends openssh-server && \
+    apt-get -y install --no-install-recommends netcat-openbsd && \
     rm -rf /var/lib/apt/lists/* && \
     mkdir -p /var/run/sshd && \
     rm -f /etc/ssh/ssh_host_*key*
 
 COPY files/sshd_config /etc/ssh/sshd_config
 COPY files/create-sftp-user /usr/local/bin/
+COPY files/healthcheck.sh /usr/local/bin/
 COPY files/entrypoint /
 
 EXPOSE 22
