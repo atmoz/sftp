@@ -1,0 +1,44 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: sftp-client
+  name: sftp-client
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: sftp-client
+  template:
+    metadata:
+      labels:
+        app: sftp-client
+    spec:
+      containers:
+      - image: atmoz/sftp
+        name: sftp-client
+        imagePullPolicy: IfNotPresent
+        volumeMounts:
+        - name: authorize
+          mountPath: /etc/ssh/ssh_host_rsa_key
+          subPath: ssh_host_rsa_key
+        - name: authorize
+          mountPath: /etc/ssh/ssh_host_ed25519_key
+          subPath: ssh_host_ed25519_key
+        - name: user
+          mountPath: /etc/sftp/users.conf
+          subPath: users.conf
+        - name: location
+          mountPath: /home/foo/upload
+      volumes:
+      - name: authorize
+        secret:
+          secretName: sftp-key
+          defaultMode: 0400
+      - name: user
+        configMap:
+          name: sftp-config
+      - name: location
+        hostPath:
+          path: /data/upload
+        

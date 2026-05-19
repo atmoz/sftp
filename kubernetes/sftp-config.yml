@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: sftp-config
+data:
+  users.conf: |
+    foo:123:1001:100
