@@ -1,0 +1,143 @@
+name: Push image
+on:
+  workflow_call:
+    inputs:
+      containerfile:
+        description: Which containerfile/dockerfile to build
+        required: true
+        type: string
+      image:
+        description: image name
+        required: true
+        type: string
+      tag:
+        description: image tag
+        required: true
+        type: string
+      update-check:
+        description: command to run on old image and check for updates
+        required: true
+        type: string
+
+jobs:
+  detect-changes:
+    runs-on: ubuntu-latest
+    outputs:
+      detected: ${{ steps.result.outputs.detected }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Pull latest image
+        run: |
+          latest_tag="docker.pkg.github.com/${{ inputs.image }}/${{ inputs.tag }}"
+          echo "latest_tag=$latest_tag" >> "$GITHUB_ENV"
+
+          echo "${{ secrets.GITHUB_TOKEN }}" | docker login docker.pkg.github.com \
+            -u ${{ github.actor }} --password-stdin
+          docker pull "$latest_tag"
+          docker logout docker.pkg.github.com
+
+      - name: Check if git revision has changed
+        id: revision
+        run: |
+          revision="$(docker image inspect --format \
+            '{{index .Config.Labels "org.opencontainers.image.revision"}}' \
+            "$latest_tag")"
+          echo "$revision"
+          if [ "$revision" != "$GITHUB_SHA" ]; then
+            echo "Latest image revision ($revision) is not the same as current revision ($GITHUB_SHA)"
+            echo "changed_revision=true" >> result
+          else
+            echo "Latest image revision is the same as current revision ($GITHUB_SHA)"
+            echo "changed_revision=false" >> result
+          fi
+
+      - name: Check for new updates
+        id: updates
+        run: |
+          packages="$(docker run --rm --entrypoint=/bin/sh "$latest_tag" -c "${{ inputs.update-check }}")"
+          echo "$packages"
+          if [ "${#packages}" -gt 0 ]; then
+            echo "Updates available"
+            echo "new_updates=true" >> result
+          else
+            echo "No new updates"
+            echo "new_updates=false" >> result
+          fi
+
+      - name: Results
+        id: result
+        run: |
+          cat result
+          if grep -q "=true" result; then
+            echo "Result: changes detected"
+            echo "detected=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "Result: no change detected"
+            echo "detected=false" >> "$GITHUB_OUTPUT"
+          fi
+
+  build:
+    runs-on: ubuntu-latest
+    needs: detect-changes
+    if: needs.detect-changes.outputs.detected == 'true'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: true # for shunit2
+
+      - name: Build image
+        run: |
+          docker build . \
+            --pull=true \
+            --file="${{ inputs.containerfile }}" \
+            --tag="${{ inputs.image }}:${{ inputs.tag }}" \
+            --label="org.opencontainers.image.source=$GITHUB_SERVER_URL/$GITHUB_REPOSITORY" \
+            --label="org.opencontainers.image.revision=$GITHUB_SHA" \
+            --label="org.opencontainers.image.created=$(date --rfc-3339=seconds)"
+
+      - name: Test image
+        run: tests/run "${{ inputs.image }}:${{ inputs.tag }}"
+
+      - name: Save image
+        run: docker save -o "${{ inputs.tag }}.tar" "${{ inputs.image }}:${{ inputs.tag }}"
+
+      - name: Upload image as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ inputs.tag }}
+          path: "${{ inputs.tag }}.tar"
+          retention-days: 1
+
+  push:
+    runs-on: ubuntu-latest
+    needs: build
+    if: github.ref == 'refs/heads/master'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download image
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ inputs.tag }}
+
+      - name: Load image
+        run: docker load -i "${{ inputs.tag }}.tar"
+
+      - name: Push image to GitHub registry
+        run: |
+          echo "${{ secrets.GITHUB_TOKEN }}" | docker login docker.pkg.github.com \
+            -u ${{ github.actor }} --password-stdin
+
+          github_tag=docker.pkg.github.com/${{ inputs.image }}/${{ inputs.tag }}
+          docker tag "${{ inputs.image }}:${{ inputs.tag }}" $github_tag
+          docker push "$github_tag"
+          docker logout docker.pkg.github.com
+
+      - name: Push images to Docker Hub registry
+        run: |
+          echo "${{ secrets.DOCKER_HUB_PASSWORD }}" | docker login \
+            -u ${{ secrets.DOCKER_HUB_USERNAME }} --password-stdin
+
+          docker push "${{ inputs.image }}:${{ inputs.tag }}"
+          docker logout
