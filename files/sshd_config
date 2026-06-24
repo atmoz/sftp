@@ -18,5 +18,7 @@ Subsystem sftp internal-sftp
 ForceCommand internal-sftp
 ChrootDirectory %h
 
+AuthorizedKeysFile %h/.ssh/authorized_keys /etc/ssh/authorized_keys/%u/authorized_keys
+
 # Enable this for more logs
 #LogLevel VERBOSE
