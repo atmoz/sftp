@@ -36,12 +36,6 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Login to Docker Hub
-        uses: docker/login-action@v3
-        with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
-
       - name: Build Debian Image for Testing
         uses: docker/build-push-action@v6
         with:
@@ -65,7 +59,49 @@ jobs:
       - name: Test Alpine Image
         run: tests/run ${{ github.repository }}:alpine
 
+      # Prefer a complete credential pair. Accepted aliases (first match wins):
+      #   DOCKERHUB_USERNAME + DOCKERHUB_TOKEN
+      #   DOCKER_USERNAME + DOCKER_TOKEN
+      #   DOCKER_HUB_USERNAME + DOCKER_HUB_PASSWORD
+      - name: Resolve Docker Hub credentials
+        if: github.event_name != 'pull_request'
+        id: hub
+        env:
+          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+          DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
+          DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+          DOCKER_TOKEN: ${{ secrets.DOCKER_TOKEN }}
+          DOCKER_HUB_USERNAME: ${{ secrets.DOCKER_HUB_USERNAME }}
+          DOCKER_HUB_PASSWORD: ${{ secrets.DOCKER_HUB_PASSWORD }}
+        run: |
+          if [ -n "$DOCKERHUB_USERNAME" ] && [ -n "$DOCKERHUB_TOKEN" ]; then
+            user="$DOCKERHUB_USERNAME"
+            pass="$DOCKERHUB_TOKEN"
+          elif [ -n "$DOCKER_USERNAME" ] && [ -n "$DOCKER_TOKEN" ]; then
+            user="$DOCKER_USERNAME"
+            pass="$DOCKER_TOKEN"
+          elif [ -n "$DOCKER_HUB_USERNAME" ] && [ -n "$DOCKER_HUB_PASSWORD" ]; then
+            user="$DOCKER_HUB_USERNAME"
+            pass="$DOCKER_HUB_PASSWORD"
+          else
+            echo "::error::Docker Hub credentials missing. Set one complete pair: DOCKERHUB_USERNAME/DOCKERHUB_TOKEN, DOCKER_USERNAME/DOCKER_TOKEN, or DOCKER_HUB_USERNAME/DOCKER_HUB_PASSWORD."
+            exit 1
+          fi
+          echo "::add-mask::$pass"
+          {
+            echo "username=$user"
+            echo "password=$pass"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Login to Docker Hub
+        if: github.event_name != 'pull_request'
+        uses: docker/login-action@v3
+        with:
+          username: ${{ steps.hub.outputs.username }}
+          password: ${{ steps.hub.outputs.password }}
+
       - name: Extract metadata for Debian
+        if: github.event_name != 'pull_request'
         id: meta-debian
         uses: docker/metadata-action@v5
         with:
@@ -79,6 +115,7 @@ jobs:
             org.opencontainers.image.source=$GITHUB_SERVER_URL/${{ github.repository }}
 
       - name: Build & Push Debian Image to Docker Hub
+        if: github.event_name != 'pull_request'
         uses: docker/build-push-action@v6
         with:
           context: .
@@ -88,6 +125,7 @@ jobs:
           platforms: linux/amd64,linux/arm64,linux/arm/v7
 
       - name: Extract metadata for Alpine
+        if: github.event_name != 'pull_request'
         id: meta-alpine
         uses: docker/metadata-action@v5
         with:
@@ -101,6 +139,7 @@ jobs:
             org.opencontainers.image.source=$GITHUB_SERVER_URL/${{ github.repository }}
 
       - name: Build & Push Alpine Image to Docker Hub
+        if: github.event_name != 'pull_request'
         uses: docker/build-push-action@v6
         with:
           context: .
@@ -111,8 +150,9 @@ jobs:
           platforms: linux/amd64,linux/arm64,linux/arm/v7
 
       - name: Update README on Docker
+        if: github.event_name != 'pull_request'
         uses: peter-evans/dockerhub-description@v4
         with:
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_TOKEN }}
+          username: ${{ steps.hub.outputs.username }}
+          password: ${{ steps.hub.outputs.password }}
           repository: ${{ github.repository }}
